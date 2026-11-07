@@ -1,6 +1,6 @@
 <div align="center">
   <img src="https://upload.wikimedia.org/wikipedia/commons/a/af/Tux.png" alt="Tux the Penguin" width="140" />
-  <h1>DistroScope</h1>
+  <h1>lfs-gentoo-tui</h1>
   <p><strong>LFS & Gentoo installation simulator in a strict TUI-style web interface.</strong></p>
 
   <a href="https://github.com/Dirfiks3/lfs-gentoo-tui">
@@ -24,25 +24,35 @@
 
 ## Overview
 
-DistroScope is a browser-based terminal simulator that recreates the grueling process of installing **Linux From Scratch (LFS)** and **Gentoo**. The project is built entirely with vanilla JavaScript, requires no backend, and works directly in your browser. 
+**lfs-gentoo-tui** is a browser-based terminal simulator that recreates the grueling process of installing two Linux distributions: **Linux From Scratch (LFS)** and **Gentoo**. The project is built entirely with vanilla JavaScript and does not require a backend. 
 
-## The Philosophy
+<div align="center">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/0/01/LinuxCon_Europe_Linus_Torvalds_03_%28cropped%29.jpg" alt="Linus Torvalds" width="200" style="border-radius: 4px;" />
+  <p><em>Linus Torvalds, creator of the Linux kernel.</em></p>
+</div>
 
-Why build a simulator for something you can just download as an ISO? Because distro-hopping is easy, but compiling your own kernel from scratch is a rite of passage. DistroScope was built to capture that specific feeling: the anxiety of manual partitioning, the endless scrolling of `make` output, and the pure satisfaction when `[  OK  ] Reached target Multi-User System` finally appears on the screen.
+## Features
 
-## Preview
+- **Interactive Terminal:** The installation process requires manual command input. The terminal responds to user commands and returns errors for invalid entries.
+- **Realistic Timers:** LFS installation takes **1 hour**, Gentoo takes **30 minutes** (accelerated mode available in code).
+- **Dynamic Logs:** Real-time compilation logs with syntax highlighting, simulated package builds, and kernel compilation output.
+- **Minimalist Desktop:** After installation, the user is dropped into a lightweight, window-manager-like environment with a functional terminal and `fastfetch`.
+- **Strict UI:** No emojis, no gradients, no distractions. Built for focus.
 
-```text
-┌────────────────────────────────────────────────────────┐
-│ root@livecd ~ # emerge -av @world — Gentoo    00:14:32 │
-├────────────────────────────────────────────────────────┤
-│ Calculating dependencies... done!                      │
-│ [ebuild N] sys-kernel/gentoo-sources-6.6.30            │
-│ [ebuild N] sys-devel/gcc-13.2.1-r5                     │
-│ >>> Emerging (1 of 214) app-arch/bzip2-1.0.8-r5        │
-│   CC       foo/bar.o                                   │
-│   CCLD     libtool                                     │
-│ >>> Jobs for 214 merges started at task progress 4%    │
-│                                                        │
-│ [████████████████████░░░░░░░░░░░░░░░░░░░] 42.1%        │
-└────────────────────────────────────────────────────────┘
+## Tech Stack
+
+- **Frontend:** Vanilla JavaScript (ES6+), HTML5, CSS3
+- **Fonts:** System monospace stack (no external dependencies)
+- **Architecture:** Modular IIFE pattern (`data.js`, `installer.js`, `desktop.js`, `app.js`)
+
+## Getting Started
+
+### Prerequisites
+
+No build tools, package managers, or servers are required. The project runs directly in any modern browser.
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Dirfiks3/lfs-gentoo-tui.git
