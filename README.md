@@ -1,20 +1,12 @@
 <div align="center">
-  <img src="https://upload.wikimedia.org/wikipedia/commons/a/af/Tux.png" alt="Tux the Penguin" width="140" />
+  <img src="https://upload.wikimedia.org/wikipedia/commons/a/af/Tux.png" alt="Tux" width="120" />
   <h1>lfs-gentoo-tui</h1>
-  <p><strong>LFS & Gentoo installation simulator in a strict TUI-style web interface.</strong></p>
-
-  <a href="https://github.com/Dirfiks3/lfs-gentoo-tui">
-    <img src="https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=flat-square&logo=javascript" alt="JavaScript" />
-  </a>
-  <a href="LICENSE">
-    <img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="License" />
-  </a>
-  <a href="#">
-    <img src="https://img.shields.io/badge/Status-Active-success?style=flat-square" alt="Status" />
-  </a>
+  <p><strong>Strict TUI-style web simulator for Linux From Scratch and Gentoo.</strong></p>
+  
+  <img src="https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=flat-square&logo=javascript" />
+  <img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" />
+  <img src="https://img.shields.io/badge/Status-Active-success?style=flat-square" />
 </div>
-
-<br />
 
 <div align="center">
   <a href="README.ru.md">Русская версия</a>
@@ -23,31 +15,30 @@
 ---
 
 ## Overview
+**lfs-gentoo-tui** is a browser-based terminal simulator. No backend, no frameworks, just vanilla JS. It recreates the pain and satisfaction of manual Linux installation.
 
-**lfs-gentoo-tui** is a browser-based terminal simulator that recreates the grueling process of installing two Linux distributions: **Linux From Scratch (LFS)** and **Gentoo**. The project is built entirely with vanilla JavaScript and does not require a backend. 
+### Why?
+Because compiling your own kernel from scratch is a rite of passage. I built this to capture the anxiety of manual partitioning and the joy of a successful `make`.
 
-<div align="center">
-  <img src="https://upload.wikimedia.org/wikipedia/commons/0/01/LinuxCon_Europe_Linus_Torvalds_03_%28cropped%29.jpg" alt="Linus Torvalds" width="200" style="border-radius: 4px;" />
-  <p><em>Linus Torvalds, creator of the Linux kernel.</em></p>
-</div>
-
-## Features
-
-- **Interactive Terminal:** The installation process requires manual command input. The terminal responds to user commands and returns errors for invalid entries.
-- **Realistic Timers:** LFS installation takes **1 hour**, Gentoo takes **30 minutes** (accelerated mode available in code).
-- **Dynamic Logs:** Real-time compilation logs with syntax highlighting, simulated package builds, and kernel compilation output.
-- **Minimalist Desktop:** After installation, the user is dropped into a lightweight, window-manager-like environment with a functional terminal and `fastfetch`.
-- **Strict UI:** No emojis, no gradients, no distractions. Built for focus.
-
-## Tech Stack
-
-- **Frontend:** Vanilla JavaScript (ES6+), HTML5, CSS3
-- **Fonts:** System monospace stack (no external dependencies)
-- **Architecture:** Modular IIFE pattern (`data.js`, `installer.js`, `desktop.js`, `app.js`)
+## Core Features
+- **Interactive Terminal:** Type commands manually to progress. Type garbage and get a `command not found`.
+- **Realistic Timers:** LFS takes 1 hour, Gentoo takes 30 minutes of real time.
+- **Dynamic Logs:** Real-time compilation noise and kernel build outputs.
+- **Setup Wizard:** After compiling, choose your DE: **KDE, GNOME, XFCE, or i3wm**. The UI and settings adapt to your choice.
+- **Full Desktop:** Custom window manager (drag, snap), functional terminal (`fastfetch`, `htop`), and file manager.
 
 ## Getting Started
+No builds required. Just clone and open.
 
-### Prerequisites
+1. Clone the repo: `git clone https://github.com/Dirfiks3/lfs-gentoo-tui.git`
+2. Open `index.html` in any modern browser.
 
-No build tools, package managers, or servers are required. The project runs directly in any modern browser.
+### Commands
+Inside the simulated desktop terminal:
+`help`, `fastfetch`, `ls`, `cat <file>`, `htop`, `reboot`, `clear`.
 
+## License & Usage (Important)
+MIT License.
+
+**You CAN:** Fork it, take the HTML/CSS boilerplate, and build your own stuff.
+**You SHOULD NOT:** Copy the project 1:1 and claim it as your own. The simulation logic and DE wizard were built specifically for this project. Respect the idea.
