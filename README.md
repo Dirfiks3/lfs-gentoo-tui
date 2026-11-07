@@ -9,7 +9,7 @@
 </div>
 
 <div align="center">
-  <a href="README.ru.md">Русская версия</a>
+  <a href="READMEru.md">Русская версия</a>
 </div>
 
 ---
