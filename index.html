@@ -1,138 +1,324 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Интерактивный симулятор установки Linux From Scratch и Gentoo в терминале." />
+  <meta name="theme-color" content="#0a0a0a" />
   <title>lfs-gentoo-tui — LFS/Gentoo Simulator</title>
   <link rel="stylesheet" href="css/style.css" />
+  
+  <!-- Встроенные стили для предотвращения мигания при загрузке -->
+  <style>
+    body { background-color: #0a0a0a; color: #fff; margin: 0; font-family: sans-serif; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+  </style>
 </head>
 <body>
 
-  <!-- ==========================================
-       ЭКРАН 1: Выбор дистрибутива
-       ========================================== -->
-  <section id="screen-choice" class="screen active">
-    <div class="choice-box">
+  <!-- =========================================================================
+       ГЛАВНЫЙ КОНТЕЙНЕР ПРИЛОЖЕНИЯ
+       ========================================================================= -->
+  <div id="app-container">
+
+    <!-- =======================================================================
+         ЭКРАН 1: ВЫБОР ДИСТРИБУТИВА (BOOT MENU)
+         ======================================================================= -->
+    <section id="screen-choice" class="screen active">
+      <div class="choice-box">
+        
+        <!-- ASCII Баннер (скрыт по умолчанию, но готов к использованию) -->
+        <pre class="ascii-banner" id="choice-banner" aria-hidden="true"></pre>
+        
+        <!-- Главный заголовок -->
+        <h1 class="main-title">DISTROSCOPE</h1>
+        
+        <!-- Подзаголовок и инструкция -->
+        <p class="subtitle">// симулятор установки: Linux From Scratch &amp; Gentoo</p>
+        <p class="hint">Выбери систему. Установка займёт <b>реальный час</b>. Выдержишь?</p>
+        
+        <!-- Контейнер с карточками выбора -->
+        <div class="choice-cards">
+          
+          <!-- КАРТОЧКА LFS -->
+          <button class="card card-lfs" data-distro="lfs" aria-label="Выбрать Linux From Scratch">
+            <!-- SVG Иконка: Терминал / Консоль -->
+            <svg class="card-logo" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="4 17 10 11 4 5"></polyline>
+              <line x1="12" y1="19" x2="20" y2="19"></line>
+            </svg>
+            <span class="card-name">LFS</span>
+            <span class="card-desc">
+              Linux From Scratch.<br/>
+              Собери систему с нуля.<br/>
+              ~150 пакетов из исходников.
+            </span>
+            <span class="card-diff">Сложность: [██████████]</span>
+          </button>
+          
+          <!-- КАРТОЧКА GENTOO -->
+          <button class="card card-gentoo" data-distro="gentoo" aria-label="Выбрать Gentoo Linux">
+            <!-- SVG Иконка: Шестеренка / Компиляция (Portage) -->
+            <svg class="card-logo" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <span class="card-name">GENTOO</span>
+            <span class="card-desc">
+              Метадистрибутив.<br/>
+              Portage, USE-флаги,<br/>
+              всё компилируется под тебя.
+            </span>
+            <span class="card-diff">Сложность: [███████░░░]</span>
+          </button>
+        </div>
+        
+        <!-- Подсказка внизу -->
+        <p class="tip">
+          Подсказка: после установки откроется рабочий стол. Там можно запустить терминал и написать <code>fastfetch</code>.
+        </p>
+      </div>
+    </section>
+
+
+    <!-- =======================================================================
+         ЭКРАН 2: УСТАНОВКА (ТЕРМИНАЛ)
+         ======================================================================= -->
+    <section id="screen-install" class="screen">
+      <div class="terminal-window">
+        
+        <!-- Верхняя панель: меню, заголовок, кнопки управления -->
+        <div class="term-titlebar">
+          <div class="term-menu">
+            <span class="menu-item">Файл</span>
+            <span class="menu-item">Правка</span>
+            <span class="menu-item">Вид</span>
+            <span class="menu-item">Вкладки</span>
+            <span class="menu-item">Справка</span>
+          </div>
+          <div class="term-title" id="install-title">root@livecd: ~</div>
+          <div class="term-controls">
+            <button class="ctrl min" aria-label="Свернуть">_</button>
+            <button class="ctrl max" aria-label="Развернуть">□</button>
+            <button class="ctrl close" aria-label="Закрыть">X</button>
+          </div>
+        </div>
+
+        <!-- Вкладки терминала (визуальная имитация) -->
+        <div class="term-tabs">
+          <div class="term-tab active">
+            <span class="tab-icon">&gt;_</span>
+            <span class="tab-text">bash — установка</span>
+            <span class="tab-close">x</span>
+          </div>
+          <button class="term-tab-new" aria-label="Новая вкладка">+</button>
+        </div>
+        
+        <!-- Тело терминала (сюда падают логи) -->
+        <div class="term-body" id="install-term" tabindex="0"></div>
+        
+        <!-- Строка ввода команд -->
+        <div class="term-inputline" id="install-inputline" style="display: none;">
+          <span class="prompt" id="install-prompt">root@livecd:~#</span>
+          <input type="text" id="install-input" class="term-in" autocomplete="off" spellcheck="false" autofocus aria-label="Ввод команды" />
+        </div>
+
+        <!-- Нижняя панель со статусом -->
+        <div class="term-statusbar">
+          <div class="status-left">
+            <span id="status-phase">READY</span>
+          </div>
+          <div class="status-center">
+            <span id="status-eta">ETA: --:--:--</span>
+          </div>
+          <div class="status-right">
+            <span id="status-percent">0%</span>
+          </div>
+        </div>
+        
+        <!-- Тонкая полоска прогресса -->
+        <div class="progress-track">
+          <div class="progress-fill" id="install-progress"></div>
+        </div>
+        
+      </div>
+    </section>
+
+
+    <!-- =======================================================================
+         ЭКРАН 3: РАБОЧИЙ СТОЛ (DESKTOP)
+         ======================================================================= -->
+    <section id="screen-desktop" class="screen">
       
-      <!-- ASCII арт (оставил пустым, если захочешь вставить через JS) -->
-      <pre class="ascii-banner" id="choice-banner"></pre>
+      <!-- Фон рабочего стола -->
+      <div class="desktop-bg" id="desktop-bg"></div>
       
-      <h1 class="main-title">DISTROSCOPE</h1>
-      
-      <p class="subtitle">// симулятор установки: Linux From Scratch & Gentoo</p>
-      <p class="hint">Выбери систему. Установка займёт <b>реальный час</b>. Выдержишь?</p>
-      
-      <!-- Карточки выбора -->
-      <div class="choice-cards">
-        <button class="card card-lfs" data-distro="lfs">
-          <!-- SVG иконка: Терминал -->
-          <svg class="card-logo" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="4 17 10 11 4 5"></polyline>
-            <line x1="12" y1="19" x2="20" y2="19"></line>
-          </svg>
-          <span class="card-name">LFS</span>
-          <span class="card-desc">Linux From Scratch.<br/>Собери систему с нуля.<br/>~150 пакетов из исходников.</span>
-          <span class="card-diff">Сложность: [██████████]</span>
+      <!-- Иконки на рабочем столе -->
+      <div class="desktop-icons" id="desktop-icons">
+        
+        <!-- Иконка: Терминал -->
+        <button class="desk-icon" data-app="terminal" aria-label="Открыть Терминал">
+          <div class="di-img">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="4 17 10 11 4 5"></polyline>
+              <line x1="12" y1="19" x2="20" y2="19"></line>
+            </svg>
+          </div>
+          <span class="di-label">Terminal</span>
         </button>
         
-        <button class="card card-gentoo" data-distro="gentoo">
-          <!-- SVG иконка: Шестеренка (Компиляция) -->
-          <svg class="card-logo" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
-          <span class="card-name">GENTOO</span>
-          <span class="card-desc">Метадистрибутив.<br/>Portage, USE-флаги,<br/>всё компилируется под тебя.</span>
-          <span class="card-diff">Сложность: [███████░░░]</span>
+        <!-- Иконка: Файлы -->
+        <button class="desk-icon" data-app="files" aria-label="Открыть Файлы">
+          <div class="di-img">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </div>
+          <span class="di-label">Files</span>
+        </button>
+        
+        <!-- Иконка: О системе -->
+        <button class="desk-icon" data-app="about" aria-label="О системе">
+          <div class="di-img">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+          </div>
+          <span class="di-label">System</span>
+        </button>
+        
+        <!-- Иконка: Handbook -->
+        <button class="desk-icon" data-app="handbook" aria-label="Открыть Handbook">
+          <div class="di-img">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
+          </div>
+          <span class="di-label">Handbook</span>
+        </button>
+        
+      </div>
+
+      <!-- Контейнер для открытых окон -->
+      <div id="windows-container"></div>
+
+      <!-- Меню "Пуск" (скрыто по умолчанию, управляется JS) -->
+      <div id="start-menu" class="start-menu hidden">
+        <div class="start-menu-header">Приложения</div>
+        <button class="sm-item" data-app="terminal">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+          Terminal
+        </button>
+        <button class="sm-item" data-app="files">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+          Files
+        </button>
+        <div class="start-menu-separator"></div>
+        <button class="sm-item" id="sm-reboot">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+          Reboot
         </button>
       </div>
-      
-      <p class="tip">Подсказка: после установки откроется рабочий стол. Там можно запустить терминал и написать <code>fastfetch</code>.</p>
-    </div>
-  </section>
 
-  <!-- ==========================================
-       ЭКРАН 2: Установка (Терминал)
-       ========================================== -->
-  <section id="screen-install" class="screen">
-    <div class="terminal-window">
-      
-      <div class="term-titlebar">
-        <div class="term-dots">
-          <span class="dot red"></span>
-          <span class="dot yellow"></span>
-          <span class="dot green"></span>
+      <!-- Панель задач (Taskbar) -->
+      <div class="taskbar">
+        <button class="start-btn" id="start-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3z"></path><path d="M6 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3z"></path></svg>
+          <span id="de-name">i3</span>
+        </button>
+        
+        <div class="taskbar-windows" id="taskbar-windows">
+          <!-- Сюда JS будет добавлять кнопки открытых окон -->
         </div>
-        <span class="term-title" id="install-title">root@livecd ~ # /bin/bash — установка</span>
-        <span class="term-clock" id="install-clock">00:00:00</span>
-      </div>
-      
-      <!-- Тело терминала, куда падают логи -->
-      <div class="term-body" id="install-term"></div>
-      
-      <!-- Строка ввода команд (скрыта по умолчанию, JS ее покажет) -->
-      <div class="term-inputline" id="install-inputline" style="display: none;">
-        <span class="prompt" id="install-prompt">root@livecd ~ #</span>
-        <input type="text" id="install-input" class="term-in" autocomplete="off" spellcheck="false" autofocus />
-      </div>
-
-      <div class="term-statusbar">
-        <span id="status-phase">READY</span>
-        <span id="status-eta">ETA: --:--:--</span>
-        <span id="status-percent">0%</span>
-      </div>
-      
-      <div class="progress-track">
-        <div class="progress-fill" id="install-progress"></div>
-      </div>
-      
-    </div>
-  </section>
-
-  <!-- ==========================================
-       ЭКРАН 3: Рабочий стол (Desktop)
-       ========================================== -->
-  <section id="screen-desktop" class="screen">
-    
-    <div class="desktop-bg" id="desktop-bg"></div>
-    <div class="desktop-icons" id="desktop-icons"></div>
-
-    <!-- Панель задач -->
-    <div class="taskbar">
-      <button class="start-btn" id="start-btn">[ <span id="de-name">i3</span> ]</button>
-      <div class="taskbar-windows" id="taskbar-windows"></div>
-      <div class="taskbar-right">
-        <span class="tb-info" id="tb-info">up 0 mins</span>
-        <span class="tb-clock" id="desktop-clock">--:--</span>
-      </div>
-    </div>
-
-    <!-- Шаблон для окон (JS клонирует его) -->
-    <template id="window-template">
-      <div class="app-window">
-        <div class="win-titlebar">
-          <span class="win-icon">&gt;_</span>
-          <span class="win-title">window</span>
-          <span class="win-spacer"></span>
-          <button class="win-btn win-min">_</button>
-          <button class="win-btn win-close">X</button>
+        
+        <div class="taskbar-right">
+          <div class="sys-tray">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="6" width="18" height="12" rx="2" ry="2"></rect><line x1="23" y1="13" x2="23" y2="11"></line></svg>
+          </div>
+          <span class="tb-info" id="tb-info">up 0 mins</span>
+          <span class="tb-clock" id="desktop-clock">--:--</span>
+          <button class="show-desktop" title="Показать рабочий стол"></button>
         </div>
-        <div class="win-body"></div>
       </div>
-    </template>
 
-    <!-- Приветственное окно после установки -->
-    <div class="welcome-toast hidden" id="welcome-toast">
-      <h2>СИСТЕМА УСТАНОВЛЕНА</h2>
-      <p id="welcome-text">Добро пожаловать. Кликни по значкам на рабочем столе.<br/>
-      Совет: открой <b>Terminal</b> и напиши <code>fastfetch</code>, <code>ls</code>, <code>neofetch</code>, <code>help</code>.</p>
+      <!-- Приветственное уведомление после установки -->
+      <div class="welcome-toast hidden" id="welcome-toast">
+        <div class="toast-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+          <h2>СИСТЕМА УСТАНОВЛЕНА</h2>
+        </div>
+        <p id="welcome-text">
+          Добро пожаловать. Кликни по значкам на рабочем столе.<br/>
+          Совет: открой <b>Terminal</b> и напиши <code>fastfetch</code>, <code>ls</code>, <code>neofetch</code> или <code>help</code>.
+        </p>
+      </div>
+      
+    </section>
+  </div>
+
+
+  <!-- =========================================================================
+       ШАБЛОНЫ ОКОН (Используются JavaScript для клонирования)
+       ========================================================================= -->
+
+  <!-- Шаблон базового окна -->
+  <template id="window-template">
+    <div class="app-window">
+      <div class="win-titlebar">
+        <span class="win-icon">&gt;_</span>
+        <span class="win-title">window</span>
+        <span class="win-spacer"></span>
+        <button class="win-btn win-min" aria-label="Свернуть">_</button>
+        <button class="win-btn win-max" aria-label="Развернуть">□</button>
+        <button class="win-btn win-close" aria-label="Закрыть">X</button>
+      </div>
+      <div class="win-body"></div>
+      <div class="win-resize-handle"></div>
     </div>
-    
-  </section>
+  </template>
 
-  <!-- Подключение скриптов (порядок важен) -->
+  <!-- Шаблон окна терминала внутри рабочего стола -->
+  <template id="terminal-app-template">
+    <div class="term-app">
+      <div class="term-out"></div>
+      <div class="term-inputline">
+        <span class="prompt"></span>
+        <input class="term-in" spellcheck="false" autocomplete="off" />
+      </div>
+    </div>
+  </template>
+
+  <!-- Шаблон окна файлового менеджера -->
+  <template id="files-app-template">
+    <div class="files-app">
+      <div class="files-toolbar">
+        <button class="btn-back">←</button>
+        <button class="btn-forward">→</button>
+        <span class="files-path">/home/user/</span>
+      </div>
+      <ul class="files-list">
+        <!-- Список файлов заполняется через JS -->
+      </ul>
+    </div>
+  </template>
+
+  <!-- Шаблон окна текстового редактора (About / Handbook) -->
+  <template id="text-app-template">
+    <div class="text-app">
+      <div class="text-content"></div>
+    </div>
+  </template>
+
+
+  <!-- =========================================================================
+       ПОДКЛЮЧЕНИЕ СКРИПТОВ
+       ========================================================================= -->
   <script src="js/data.js"></script>
   <script src="js/installer.js"></script>
   <script src="js/desktop.js"></script>
