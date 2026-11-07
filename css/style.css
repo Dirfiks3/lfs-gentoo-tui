@@ -5,6 +5,7 @@
    Описание: Глобальные переменные, сброс стилей, кастомные
    скроллбары, стили терминала, оконного менеджера, 
    приложений (Files, Settings, SysMonitor) и разных DE.
+   Терминал полностью монохромный (черно-белый).
    ============================================================ */
 
 /* ============================================================
@@ -27,10 +28,10 @@
     --border-dark: #111111;
     --border-accent: #555555;
     
-    /* Акценты (по умолчанию зеленый LFS) */
-    --accent: #4af626;
-    --accent-hover: #3ce018;
-    --accent-dim: rgba(74, 246, 38, 0.2);
+    /* Акценты (по умолчанию белый для терминала) */
+    --accent: #ffffff;
+    --accent-hover: #cccccc;
+    --accent-dim: rgba(255, 255, 255, 0.2);
     
     /* Статусы */
     --color-error: #ff5f56;
@@ -149,12 +150,11 @@ html, body {
 
 .ascii-banner {
     font-family: var(--font-mono);
-    color: var(--accent);
+    color: #ffffff; /* Белый вместо зеленого */
     font-size: 12px;
     line-height: 1.2;
     margin-bottom: 20px;
     white-space: pre;
-    text-shadow: 0 0 10px var(--accent-dim);
 }
 
 .main-title {
@@ -165,7 +165,6 @@ html, body {
     text-transform: uppercase;
     margin-bottom: 20px;
     color: #fff;
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
 }
 
 .subtitle {
@@ -184,7 +183,7 @@ html, body {
     margin-bottom: 40px;
     background: var(--bg-surface);
 }
-.hint b { color: var(--accent); }
+.hint b { color: #fff; }
 
 .tip {
     margin-top: 40px;
@@ -218,7 +217,7 @@ html, body {
 
 .card:hover {
     background: var(--bg-hover);
-    border-color: var(--accent);
+    border-color: #fff;
     transform: translateY(-5px);
     box-shadow: 0 10px 20px rgba(0,0,0,0.5);
 }
@@ -231,8 +230,8 @@ html, body {
     fill: none;
 }
 
-.card-lfs .card-logo { color: var(--accent); }
-.card-gentoo .card-logo { color: #a855f7; }
+.card-lfs .card-logo { color: #ffffff; }
+.card-gentoo .card-logo { color: #ffffff; }
 
 .card-name {
     font-size: 24px;
@@ -240,8 +239,8 @@ html, body {
     margin-bottom: 10px;
     letter-spacing: 1px;
 }
-.card-lfs .card-name { color: var(--accent); }
-.card-gentoo .card-name { color: #a855f7; }
+.card-lfs .card-name { color: #ffffff; }
+.card-gentoo .card-name { color: #ffffff; }
 
 .card-desc {
     font-size: 14px;
@@ -255,7 +254,7 @@ html, body {
     font-size: 12px;
     font-family: var(--font-mono);
     font-weight: bold;
-    color: var(--color-warn);
+    color: var(--text-muted);
 }
 
 /* ============================================================
@@ -276,7 +275,7 @@ html, body {
 
 .setup-title {
     font-size: 32px;
-    color: var(--accent);
+    color: #ffffff;
     margin-bottom: 10px;
     font-family: var(--font-mono);
 }
@@ -325,7 +324,7 @@ html, body {
 }
 
 /* ============================================================
-   6. ЭКРАН УСТАНОВКИ (ТЕРМИНАЛ)
+   6. ЭКРАН УСТАНОВКИ (ТЕРМИНАЛ - СТРОГО БЕЛЫЙ)
    ============================================================ */
 #screen-install {
     background: #000;
@@ -433,7 +432,7 @@ html, body {
     font-family: var(--font-mono);
     font-size: 14px;
     line-height: 1.5;
-    color: #ddd;
+    color: #ffffff; /* ЧИСТО БЕЛЫЙ ТЕКСТ */
     user-select: text;
     background: #000;
 }
@@ -449,7 +448,7 @@ html, body {
 }
 
 .prompt {
-    color: var(--accent);
+    color: #ffffff; /* БЕЛЫЙ ПРОМПТ */
     font-weight: bold;
     white-space: nowrap;
 }
@@ -459,20 +458,10 @@ html, body {
     background: transparent;
     border: none;
     outline: none;
-    color: #fff;
+    color: #ffffff; /* БЕЛЫЙ ВВОД */
     font-family: var(--font-mono);
     font-size: 14px;
-    caret-color: transparent; /* Скрываем стандартный курсор */
-}
-
-/* Мигающий блок-курсор (если добавляли) */
-.term-cursor {
-    display: inline-block;
-    width: 8px;
-    height: 15px;
-    background: #fff;
-    animation: blink-anim 1s step-end infinite;
-    vertical-align: middle;
+    caret-color: #ffffff; /* БЕЛЫЙ КУРСОР */
 }
 
 /* Статусбар */
@@ -489,13 +478,13 @@ html, body {
 }
 
 .status-left { display: flex; align-items: center; gap: 8px; }
-.status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
-#status-phase { color: var(--accent); font-weight: bold; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: #ffffff; }
+#status-phase { color: #ffffff; font-weight: bold; }
 
 .status-center { flex: 1; text-align: center; }
 
 .status-right { display: flex; align-items: center; gap: 15px; }
-#status-percent { color: #fff; font-weight: bold; }
+#status-percent { color: #ffffff; font-weight: bold; }
 
 .status-progress {
     width: 150px;
@@ -506,18 +495,18 @@ html, body {
 }
 .progress-fill {
     height: 100%;
-    background: var(--accent);
+    background: #ffffff; /* БЕЛЫЙ ПРОГРЕСС-БАР */
     width: 0%;
     transition: width 0.3s ease;
 }
 
-/* Цвета логов */
-.log-cmd { color: var(--accent); }
-.log-out { color: #ddd; }
-.log-ok { color: var(--color-ok); }
-.log-err { color: var(--color-error); }
-.log-info { color: var(--color-info); }
-.log-dim { color: var(--text-muted); }
+/* Цвета логов (все белые) */
+.log-cmd { color: #ffffff; font-weight: bold; }
+.log-out { color: #ffffff; }
+.log-ok { color: #ffffff; }
+.log-err { color: #ff5f56; } /* Ошибки оставил красными */
+.log-info { color: #ffffff; }
+.log-dim { color: #888888; } /* Тусклый серый для подсказок */
 
 /* ============================================================
    7. РАБОЧИЙ СТОЛ (DESKTOP)
@@ -634,8 +623,8 @@ html, body {
 }
 .tb-win:hover { background: var(--bg-hover); color: #fff; }
 .tb-win.active {
-    border-color: var(--accent);
-    color: var(--accent);
+    border-color: #fff;
+    color: #fff;
     background: var(--bg-hover);
 }
 
@@ -720,7 +709,6 @@ html, body {
     min-width: 300px;
     min-height: 200px;
     transition: opacity 0.2s, transform 0.2s;
-    /* По умолчанию окна немного прозрачные, пока не в фокусе */
     opacity: 0.95;
 }
 
@@ -753,7 +741,7 @@ html, body {
 
 .win-icon {
     font-family: var(--font-mono);
-    color: var(--accent);
+    color: #fff;
     font-size: 12px;
 }
 
@@ -765,7 +753,7 @@ html, body {
     border-radius: 50%;
     border: none;
     background: var(--border-light);
-    color: transparent; /* Текст скрыт, показывается при ховере */
+    color: transparent;
     font-size: 10px;
     display: flex;
     align-items: center;
@@ -805,7 +793,7 @@ html, body {
     padding: 15px;
     overflow-y: auto;
     line-height: 1.5;
-    color: #ddd;
+    color: #ffffff;
     user-select: text;
 }
 
@@ -880,7 +868,7 @@ html, body {
 .file-icon {
     font-family: var(--font-mono);
     font-size: 24px;
-    color: var(--accent);
+    color: #fff;
 }
 
 .file-name {
@@ -907,7 +895,7 @@ html, body {
 }
 
 .btn-save {
-    background: var(--accent);
+    background: #ffffff;
     color: #000;
     border: none;
     padding: 5px 12px;
@@ -916,7 +904,7 @@ html, body {
     cursor: pointer;
     font-size: 12px;
 }
-.btn-save:hover { background: var(--accent-hover); }
+.btn-save:hover { background: #cccccc; }
 
 .editor-status {
     font-size: 12px;
@@ -1005,12 +993,12 @@ html, body {
 .settings-text input {
     background: #111;
     border: 1px solid var(--border-light);
-    color: var(--accent);
+    color: #fff;
     padding: 5px;
     font-family: var(--font-mono);
     outline: none;
 }
-.settings-text input:focus { border-color: var(--accent); }
+.settings-text input:focus { border-color: #fff; }
 
 /* Стиль KDE (GUI с сайдбаром) */
 .settings-gui {
@@ -1033,7 +1021,7 @@ html, body {
 .set-tab.active {
     background: var(--bg-hover);
     color: #fff;
-    border-left-color: var(--accent);
+    border-left-color: #fff;
 }
 
 .settings-content {
@@ -1055,13 +1043,13 @@ html, body {
 
 .setting-group input[type="range"] {
     width: 100%;
-    accent-color: var(--accent);
+    accent-color: #fff;
 }
 
 .setting-group input[type="checkbox"] {
     width: 20px;
     height: 20px;
-    accent-color: var(--accent);
+    accent-color: #fff;
     cursor: pointer;
 }
 
@@ -1094,7 +1082,7 @@ html, body {
     width: 350px;
     background: var(--bg-surface);
     border: 1px solid var(--border-light);
-    border-left: 4px solid var(--accent);
+    border-left: 4px solid #fff;
     border-radius: 6px;
     padding: 15px 20px;
     box-shadow: var(--shadow-window);
@@ -1110,7 +1098,7 @@ html, body {
 }
 .toast-header h2 {
     font-size: 14px;
-    color: var(--accent);
+    color: #fff;
     text-transform: uppercase;
 }
 .toast-body p { font-size: 13px; color: #ccc; margin-bottom: 5px; }
@@ -1190,7 +1178,7 @@ html, body {
     .settings-app { flex-direction: column; }
     .settings-sidebar { width: 100%; display: flex; overflow-x: auto; border-right: none; border-bottom: 1px solid var(--border-dark); }
     .set-tab { white-space: nowrap; border-left: none; border-bottom: 3px solid transparent; }
-    .set-tab.active { border-left-color: transparent; border-bottom-color: var(--accent); }
+    .set-tab.active { border-left-color: transparent; border-bottom-color: #fff; }
 }
 
 /* ============================================================
