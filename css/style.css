@@ -1,522 +1,1198 @@
 /* ============================================================
-   style.css — Полный стиль для симулятора ОС
+   style.css — ПОЛНЫЙ СТИЛЬ СИМУЛЯТОРА lfs-gentoo-tui
+   Проект: lfs-gentoo-tui
+   Строк: ~800
+   Описание: Глобальные переменные, сброс стилей, кастомные
+   скроллбары, стили терминала, оконного менеджера, 
+   приложений (Files, Settings, SysMonitor) и разных DE.
    ============================================================ */
 
+/* ============================================================
+   1. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ И ТЕМЫ
+   ============================================================ */
 :root {
-  --bg: #0a0a0a;
-  --panel: #1a1a1a;
-  --border: #333333;
-  --text: #ffffff;
-  --text-dim: #888888;
-  
-  --accent-lfs: #4af626;
-  --accent-gentoo: #a855f7;
-  
-  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --mono: Consolas, "Courier New", monospace;
+    /* Основная палитра (Темная тема по умолчанию) */
+    --bg-main: #0a0a0a;
+    --bg-panel: #121212;
+    --bg-surface: #1e1e1e;
+    --bg-hover: #2a2a2a;
+    
+    /* Текст */
+    --text-main: #ffffff;
+    --text-muted: #888888;
+    --text-dark: #444444;
+    
+    /* Границы и разделители */
+    --border-light: #333333;
+    --border-dark: #111111;
+    --border-accent: #555555;
+    
+    /* Акценты (по умолчанию зеленый LFS) */
+    --accent: #4af626;
+    --accent-hover: #3ce018;
+    --accent-dim: rgba(74, 246, 38, 0.2);
+    
+    /* Статусы */
+    --color-error: #ff5f56;
+    --color-warn: #ffbd2e;
+    --color-ok: #27c93f;
+    --color-info: #58a6ff;
+    
+    /* Шрифты */
+    --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono: "Consolas", "Courier New", monospace;
+    
+    /* Тени */
+    --shadow-window: 0 10px 30px rgba(0, 0, 0, 0.7);
+    --shadow-focus: 0 15px 40px rgba(0, 0, 0, 0.9);
+    --shadow-panel: 0 -5px 20px rgba(0, 0, 0, 0.5);
+    
+    /* Анимации */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
 }
 
-* { 
-  margin: 0; 
-  padding: 0; 
-  box-sizing: border-box; 
+/* ============================================================
+   2. СБРОС СТИЛЕЙ (RESET)
+   ============================================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 html, body {
-  height: 100%;
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--sans);
-  overflow: hidden;
-  user-select: none;
+    height: 100%;
+    width: 100%;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: var(--font-ui);
+    overflow: hidden;
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-.screen { 
-  display: none; 
-  height: 100vh; 
-  width: 100vw; 
+/* Кастомные скроллбары для Webkit (Chrome, Edge, Safari) */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
 }
-.screen.active { 
-  display: block; 
+::-webkit-scrollbar-track {
+    background: var(--bg-main);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--border-light);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--border-accent);
 }
 
 /* ============================================================
-   ЭКРАН 1: ВЫБОР ДИСТРИБУТИВА
+   3. УТИЛИТЫ И АНИМАЦИИ
+   ============================================================ */
+.hidden {
+    display: none !important;
+}
+
+.blink {
+    animation: blink-anim 1s step-end infinite;
+}
+
+@keyframes blink-anim {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+@keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes pop-in {
+    0% { transform: scale(0.9); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Управление экранами */
+.screen {
+    display: none;
+    height: 100vh;
+    width: 100vw;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+.screen.active {
+    display: flex;
+    animation: fade-in var(--transition-normal);
+}
+
+/* ============================================================
+   4. ЭКРАН ВЫБОРА ДИСТРИБУТИВА
    ============================================================ */
 #screen-choice {
-  display: none;
-  place-items: center;
-}
-#screen-choice.active { 
-  display: grid; 
-}
-
-.choice-box { 
-  text-align: left;
-  max-width: 900px; 
-  padding: 40px; 
-  width: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at center, #111 0%, #050505 100%);
 }
 
-.ascii-banner { display: none; }
+.choice-box {
+    max-width: 900px;
+    width: 100%;
+    padding: 40px;
+    text-align: left;
+}
+
+.ascii-banner {
+    font-family: var(--font-mono);
+    color: var(--accent);
+    font-size: 12px;
+    line-height: 1.2;
+    margin-bottom: 20px;
+    white-space: pre;
+    text-shadow: 0 0 10px var(--accent-dim);
+}
 
 .main-title {
-  font-size: 72px;
-  font-weight: 900;
-  letter-spacing: -2px;
-  line-height: 1;
-  text-transform: uppercase;
-  margin-bottom: 20px;
+    font-size: 72px;
+    font-weight: 900;
+    letter-spacing: -2px;
+    line-height: 1;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
 }
 
-.subtitle { 
-  color: var(--text-dim); 
-  font-size: 18px; 
-  margin-bottom: 30px; 
-  max-width: 600px;
-  line-height: 1.5;
+.subtitle {
+    font-size: 18px;
+    color: var(--text-muted);
+    margin-bottom: 30px;
+    font-family: var(--font-mono);
 }
 
-.hint { 
-  display: inline-block;
-  border: 1px solid var(--border);
-  padding: 12px 20px;
-  border-radius: 4px;
-  color: var(--text); 
-  margin-bottom: 40px;
-  font-size: 14px;
+.hint {
+    display: inline-block;
+    border: 1px solid var(--border-light);
+    padding: 12px 20px;
+    border-radius: 4px;
+    font-size: 14px;
+    margin-bottom: 40px;
+    background: var(--bg-surface);
 }
-.hint b { color: var(--text); font-weight: bold; }
+.hint b { color: var(--accent); }
 
-.tip { 
-  margin-top: 40px; 
-  color: var(--text-dim); 
-  font-size: 13px; 
-  border-top: 1px solid var(--border);
-  padding-top: 20px;
-}
-.tip code { 
-  font-family: var(--mono);
-  color: var(--text); 
-  background: var(--panel); 
-  padding: 4px 8px; 
-  border-radius: 4px; 
+.tip {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-light);
+    color: var(--text-muted);
+    font-size: 13px;
 }
 
-.choice-cards { 
-  display: flex; 
-  gap: 20px; 
-  flex-wrap: wrap; 
+.choice-cards {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
 }
 
 .card {
-  flex: 1;
-  min-width: 280px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text);
-  font-family: var(--sans);
-  cursor: pointer;
-  padding: 30px;
-  display: flex; 
-  flex-direction: column; 
-  align-items: flex-start;
-  transition: all 0.15s ease;
+    flex: 1;
+    min-width: 280px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-align: left;
+    color: var(--text-main);
 }
 
-.card:hover { 
-  background: var(--text);
-  color: var(--bg);
-  border-color: var(--text);
+.card:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
 }
 
-.card-logo { 
-  width: 32px; height: 32px; 
-  stroke: currentColor; fill: none;
-  margin-bottom: 20px;
+.card-logo {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 20px;
+    stroke: currentColor;
+    fill: none;
 }
 
-.card-lfs .card-name, .card-lfs .card-logo { color: var(--accent-lfs) !important; }
-.card-gentoo .card-name, .card-gentoo .card-logo { color: var(--accent-gentoo) !important; }
-.card:hover .card-name, .card:hover .card-logo { color: var(--bg) !important; }
+.card-lfs .card-logo { color: var(--accent); }
+.card-gentoo .card-logo { color: #a855f7; }
 
-.card-name { 
-  font-size: 24px; 
-  font-weight: 800; 
-  letter-spacing: 1px; 
-  margin-bottom: 12px;
+.card-name {
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+}
+.card-lfs .card-name { color: var(--accent); }
+.card-gentoo .card-name { color: #a855f7; }
+
+.card-desc {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 25px;
+    flex-grow: 1;
 }
 
-.card-desc { 
-  font-size: 14px; 
-  color: var(--text-dim); 
-  line-height: 1.5; 
-  margin-bottom: 30px;
-}
-.card:hover .card-desc { color: #444; }
-
-.card-diff { 
-  margin-top: auto; 
-  font-size: 12px; 
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+.card-diff {
+    font-size: 12px;
+    font-family: var(--font-mono);
+    font-weight: bold;
+    color: var(--color-warn);
 }
 
 /* ============================================================
-   ЭКРАН 2: ТЕРМИНАЛ (На весь экран)
+   5. ЭКРАН НАСТРОЙКИ (SETUP WIZARD)
+   ============================================================ */
+.setup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 5, 5, 0.95);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    animation: fade-in var(--transition-normal);
+}
+
+.setup-title {
+    font-size: 32px;
+    color: var(--accent);
+    margin-bottom: 10px;
+    font-family: var(--font-mono);
+}
+
+.setup-subtitle {
+    color: var(--text-muted);
+    margin-bottom: 40px;
+    font-size: 16px;
+}
+
+.de-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    max-width: 900px;
+    width: 100%;
+    padding: 20px;
+}
+
+.de-card-btn {
+    background: var(--bg-surface);
+    border: 2px solid var(--border-light);
+    border-radius: 8px;
+    padding: 25px;
+    text-align: left;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    color: #fff;
+}
+
+.de-card-btn:hover {
+    border-color: #fff;
+    background: var(--bg-hover);
+    transform: scale(1.02);
+}
+
+.de-card-btn h3 {
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+.de-card-btn p {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+/* ============================================================
+   6. ЭКРАН УСТАНОВКИ (ТЕРМИНАЛ)
    ============================================================ */
 #screen-install {
-  background: #0c0c0c; 
-  display: none; 
-}
-#screen-install.active { 
-  display: flex; 
+    background: #000;
+    flex-direction: column;
 }
 
 .terminal-window {
-  width: 100vw; 
-  height: 100vh;
-  background: #0c0c0c;
-  display: flex; 
-  flex-direction: column;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    background: #000;
 }
 
-/* Верхняя панель */
+/* Верхняя панель терминала */
 .term-titlebar {
-  display: flex; 
-  align-items: center; 
-  background: #1e1e1e;
-  height: 36px;
-  padding: 0 15px;
-  font-size: 13px;
-  border-bottom: 1px solid #333;
+    display: flex;
+    align-items: center;
+    background: var(--bg-surface);
+    height: 36px;
+    padding: 0 15px;
+    border-bottom: 1px solid var(--border-dark);
+    font-size: 13px;
 }
 
-.term-menu { display: flex; gap: 15px; margin-right: 20px; color: #aaa; }
-.term-menu span { cursor: pointer; }
-.term-menu span:hover { color: #fff; }
+.term-menu {
+    display: flex;
+    gap: 15px;
+    color: var(--text-muted);
+}
+.term-menu span:hover { color: #fff; cursor: pointer; }
 
-.term-title { flex: 1; text-align: center; color: #888; font-weight: bold; }
+.term-title {
+    flex: 1;
+    text-align: center;
+    color: var(--text-muted);
+    font-weight: bold;
+    font-family: var(--font-mono);
+}
 
-.term-controls { display: flex; gap: 10px; }
+.term-controls {
+    display: flex;
+    gap: 8px;
+}
+
 .ctrl {
-  background: transparent;
-  border: none;
-  color: #aaa;
-  font-size: 14px;
-  cursor: pointer;
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  display: flex; align-items: center; justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 14px;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition-fast);
 }
-.ctrl:hover { background: #333; color: #fff; }
-.ctrl.close:hover { background: #ff5f56; color: #fff; }
+.ctrl:hover { background: var(--border-light); color: #fff; }
+.ctrl.close:hover { background: var(--color-error); color: #fff; }
 
-/* Вкладки */
+/* Вкладки терминала */
 .term-tabs {
-  display: flex;
-  background: #151515;
-  padding: 5px 10px 0;
-  gap: 5px;
+    display: flex;
+    background: var(--bg-main);
+    padding: 5px 10px 0;
+    gap: 5px;
+    border-bottom: 1px solid var(--border-dark);
 }
+
 .term-tab {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #0c0c0c;
-  padding: 8px 15px;
-  border-radius: 6px 6px 0 0;
-  font-size: 12px;
-  color: #ccc;
-  border: 1px solid #333;
-  border-bottom: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-surface);
+    padding: 8px 15px;
+    border-radius: 6px 6px 0 0;
+    font-size: 12px;
+    color: var(--text-muted);
+    border: 1px solid var(--border-dark);
+    border-bottom: none;
+    font-family: var(--font-mono);
 }
-.term-tab.active { background: #0c0c0c; color: #fff; }
-.tab-close { font-family: var(--mono); font-size: 10px; opacity: 0.5; }
-.term-tab-new { background: transparent; border: none; color: #888; font-size: 18px; cursor: pointer; padding: 0 10px; }
+.term-tab.active { background: #000; color: #fff; }
 
-/* Тело терминала */
+.tab-icon { width: 14px; height: 14px; }
+.tab-close { font-size: 10px; opacity: 0.5; cursor: pointer; }
+.tab-close:hover { opacity: 1; color: var(--color-error); }
+
+.term-tab-new {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0 10px;
+}
+
+/* Основное тело терминала */
 .term-body {
-  flex: 1; 
-  overflow-y: auto; 
-  padding: 15px;
-  font-family: var(--mono);
-  font-size: 15px; 
-  line-height: 1.5;
-  color: #cccccc;
-  user-select: text;
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1.5;
+    color: #ddd;
+    user-select: text;
+    background: #000;
 }
 
-.log-cmd { color: #4af626; } 
-.log-out { color: #cccccc; }
-.log-ok { color: #4af626; font-weight: bold; }
-.log-err { color: #ff5f56; }
-.log-info { color: #58a6ff; }
-.log-dim { color: #666; }
-
-/* Ввод */
+/* Строка ввода */
 .term-inputline {
-  display: flex;
-  gap: 8px;
-  padding: 10px 15px;
-  font-family: var(--mono);
-  font-size: 15px;
-  background: #0c0c0c;
+    display: flex;
+    gap: 8px;
+    padding: 10px 15px;
+    background: #000;
+    font-family: var(--font-mono);
+    font-size: 14px;
 }
-.prompt { color: #4af626; font-weight: bold; }
+
+.prompt {
+    color: var(--accent);
+    font-weight: bold;
+    white-space: nowrap;
+}
+
 .term-in {
-  flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  color: #ffffff;
-  font-family: var(--mono);
-  font-size: 15px;
-  caret-color: #4af626;
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    caret-color: transparent; /* Скрываем стандартный курсор */
+}
+
+/* Мигающий блок-курсор (если добавляли) */
+.term-cursor {
+    display: inline-block;
+    width: 8px;
+    height: 15px;
+    background: #fff;
+    animation: blink-anim 1s step-end infinite;
+    vertical-align: middle;
 }
 
 /* Статусбар */
 .term-statusbar {
-  display: flex; 
-  justify-content: space-between;
-  padding: 5px 15px; 
-  font-size: 12px;
-  background: #1e1e1e; 
-  color: #888;
-  border-top: 1px solid #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 15px;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border-dark);
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
 }
-#status-phase { color: #4af626; font-weight: bold; }
 
-.progress-track { height: 3px; background: #333; }
-.progress-fill { height: 100%; width: 0%; background: #4af626; transition: width 0.3s; }
+.status-left { display: flex; align-items: center; gap: 8px; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+#status-phase { color: var(--accent); font-weight: bold; }
+
+.status-center { flex: 1; text-align: center; }
+
+.status-right { display: flex; align-items: center; gap: 15px; }
+#status-percent { color: #fff; font-weight: bold; }
+
+.status-progress {
+    width: 150px;
+    height: 4px;
+    background: var(--border-light);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+/* Цвета логов */
+.log-cmd { color: var(--accent); }
+.log-out { color: #ddd; }
+.log-ok { color: var(--color-ok); }
+.log-err { color: var(--color-error); }
+.log-info { color: var(--color-info); }
+.log-dim { color: var(--text-muted); }
 
 /* ============================================================
-   ЭКРАН 3: РАБОЧИЙ СТОЛ
+   7. РАБОЧИЙ СТОЛ (DESKTOP)
    ============================================================ */
-#screen-desktop { 
-  position: relative; 
-  background: #1a1a1a; /* Темный фон */
+#screen-desktop {
+    background: #1a1a1a;
+    position: relative;
+    overflow: hidden;
+}
+
+.desktop-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-size: cover;
+    background-position: center;
+    transition: background var(--transition-slow);
 }
 
 /* Иконки на столе */
 .desktop-icons {
-  position: absolute; 
-  top: 20px; 
-  left: 20px; 
-  z-index: 1;
-  display: flex; 
-  flex-direction: column; 
-  gap: 15px;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
 .desk-icon {
-  width: 90px; 
-  padding: 15px 10px;
-  background: transparent; 
-  border: 1px solid transparent; 
-  border-radius: 4px;
-  color: var(--text); 
-  font-family: var(--sans); 
-  font-size: 12px;
-  display: flex; 
-  flex-direction: column; 
-  align-items: center; 
-  gap: 10px;
-  cursor: pointer; 
-  transition: all 0.15s;
+    width: 90px;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background var(--transition-fast);
 }
-.desk-icon:hover { 
-  background: rgba(255, 255, 255, 0.1); 
-  border-color: rgba(255, 255, 255, 0.2); 
+.desk-icon:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
 }
-.di-img svg { stroke: #fff; }
-.di-label { text-shadow: 1px 1px 2px #000; }
 
-/* Панель задач */
+.di-img {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.di-img svg { width: 100%; height: 100%; stroke: #fff; }
+.di-label { font-size: 12px; text-shadow: 1px 1px 2px #000; }
+
+/* Панель задач (Taskbar) */
 .taskbar {
-  position: absolute; 
-  bottom: 0; left: 0; right: 0; 
-  height: 44px; 
-  z-index: 100;
-  display: flex; 
-  align-items: center; 
-  gap: 10px; 
-  padding: 0 10px;
-  background: #111;
-  border-top: 1px solid #333;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 44px;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    z-index: 1000;
 }
 
 .start-btn {
-  background: transparent; 
-  color: var(--text);
-  border: 1px solid transparent; 
-  border-radius: 4px;
-  padding: 6px 12px; 
-  font-family: var(--sans); 
-  font-size: 13px; 
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 13px;
+    transition: background var(--transition-fast);
 }
-.start-btn:hover { background: #333; }
+.start-btn:hover { background: var(--bg-hover); }
+.start-btn svg { width: 16px; height: 16px; }
 
-.taskbar-windows { 
-  display: flex; 
-  gap: 5px; 
-  flex: 1; 
-  overflow-x: auto; 
+.taskbar-windows {
+    display: flex;
+    gap: 5px;
+    flex: 1;
+    margin-left: 10px;
+    overflow-x: auto;
 }
+.taskbar-windows::-webkit-scrollbar { display: none; }
 
 .tb-win {
-  background: #222; 
-  color: #ccc;
-  border: 1px solid #333; 
-  border-radius: 4px;
-  padding: 6px 12px; 
-  font-family: var(--sans); 
-  font-size: 12px; 
-  cursor: pointer;
-  max-width: 200px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    background: var(--bg-main);
+    border: 1px solid var(--border-light);
+    color: var(--text-muted);
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all var(--transition-fast);
 }
-.tb-win.active { 
-  background: #444; 
-  color: #fff;
-  border-color: #555;
+.tb-win:hover { background: var(--bg-hover); color: #fff; }
+.tb-win.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--bg-hover);
 }
 
-.taskbar-right { 
-  display: flex; 
-  align-items: center;
-  gap: 15px; 
-  color: #ccc; 
-  font-size: 12px; 
+.taskbar-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-family: var(--font-mono);
 }
-.sys-tray { display: flex; gap: 8px; color: #aaa; }
+
+.sys-tray { display: flex; gap: 8px; }
+.sys-tray svg { width: 14px; height: 14px; stroke: currentColor; }
+
 .tb-clock { color: #fff; font-weight: bold; }
-
-/* Окна */
-.app-window {
-  position: absolute; 
-  z-index: 10;
-  min-width: 300px; 
-  min-height: 200px;
-  background: #1e1e1e; 
-  border: 1px solid #444;
-  border-radius: 6px; 
-  display: flex; 
-  flex-direction: column;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-  overflow: hidden;
-}
-
-.app-window.focused { 
-  border-color: #666; 
-  box-shadow: 0 15px 40px rgba(0,0,0,0.8);
-}
-
-.win-titlebar {
-  display: flex; 
-  align-items: center; 
-  gap: 10px;
-  padding: 10px 15px; 
-  cursor: grab; 
-  background: #2a2a2a;
-  border-bottom: 1px solid #111;
-  font-family: var(--sans); 
-  font-size: 13px; 
-  font-weight: bold;
-  color: #eee;
-}
-
-.win-spacer { flex: 1; }
-.win-btn {
-  background: transparent; 
-  border: none; 
-  color: #aaa;
-  width: 20px; height: 20px; 
-  border-radius: 4px; 
-  cursor: pointer; 
-  display: flex; align-items: center; justify-content: center;
-}
-.win-btn:hover { background: #444; color: #fff; }
-.win-close:hover { background: #ff5f56; color: #fff; }
-
-.win-body { flex: 1; overflow: auto; display: flex; flex-direction: column; }
-
-/* Терминал на рабочем столе */
-.term-app { display: flex; flex-direction: column; height: 100%; background: #0c0c0c; font-family: var(--mono); }
-.term-out { flex: 1; overflow-y: auto; padding: 15px; line-height: 1.5; color: #ccc; font-size: 14px; user-select: text; }
-.term-app .term-inputline { padding: 10px 15px; border-top: 1px solid #222; }
-
-/* Приложения: Файлы и Текст */
-.files-app { display: flex; flex-direction: column; height: 100%; background: #1e1e1e; }
-.files-toolbar { padding: 10px; border-bottom: 1px solid #111; display: flex; align-items: center; gap: 10px; }
-.files-list { list-style: none; padding: 10px; overflow-y: auto; color: #ccc; font-size: 13px; }
-.files-list li { padding: 8px 10px; border-bottom: 1px solid #2a2a2a; display: flex; align-items: center; gap: 10px; }
-.files-list li:hover { background: #333; }
-
-.text-app { padding: 20px; color: #ccc; font-size: 14px; line-height: 1.6; overflow-y: auto; height: 100%; background: #1e1e1e; }
-.text-app h3 { color: #fff; margin-bottom: 10px; }
-.text-app code { font-family: var(--mono); background: #111; padding: 2px 6px; border-radius: 4px; color: #4af626; }
-.text-app hr { border: none; border-top: 1px solid #333; margin: 15px 0; }
 
 /* Меню Пуск */
 .start-menu {
-  position: absolute;
-  bottom: 44px;
-  left: 0;
-  width: 250px;
-  background: #1e1e1e;
-  border: 1px solid #333;
-  border-radius: 0 6px 0 0;
-  z-index: 200;
-  display: flex;
-  flex-direction: column;
-  padding: 10px 0;
-  box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+    position: absolute;
+    bottom: 44px;
+    left: 0;
+    width: 260px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-bottom: none;
+    border-radius: 0 8px 0 0;
+    box-shadow: var(--shadow-panel);
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    animation: pop-in var(--transition-fast);
 }
-.start-menu.hidden { display: none; }
-.start-menu-header { padding: 10px 20px; font-size: 12px; text-transform: uppercase; color: #666; font-weight: bold; }
-.sm-item {
-  background: transparent;
-  border: none;
-  color: #ccc;
-  padding: 10px 20px;
-  text-align: left;
-  font-family: var(--sans);
-  font-size: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.sm-item:hover { background: #333; color: #fff; }
-.start-menu-separator { height: 1px; background: #333; margin: 5px 0; }
 
-/* Тост */
-.welcome-toast {
-  position: absolute; 
-  bottom: 60px; 
-  right: 20px;
-  z-index: 300; 
-  width: 350px;
-  background: #1e1e1e;
-  border: 1px solid #444;
-  border-left: 4px solid #4af626;
-  border-radius: 4px;
-  padding: 15px 20px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-  font-size: 13px;
+.start-menu-header {
+    padding: 12px 20px;
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: bold;
+    color: var(--text-muted);
+    letter-spacing: 1px;
 }
-.welcome-toast.hidden { display: none; }
-.toast-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; color: #4af626; }
-.toast-header h2 { font-size: 14px; font-weight: bold; text-transform: uppercase; }
-.welcome-toast p { color: #ccc; line-height: 1.4; }
-.welcome-toast code { font-family: var(--mono); background: #111; padding: 2px 4px; border-radius: 3px; }
+
+.sm-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    background: transparent;
+    border: none;
+    color: #ddd;
+    font-size: 13px;
+    cursor: pointer;
+    text-align: left;
+    transition: background var(--transition-fast);
+}
+.sm-item:hover { background: var(--bg-hover); color: #fff; }
+.sm-item svg { width: 16px; height: 16px; stroke: currentColor; }
+
+.start-menu-separator {
+    height: 1px;
+    background: var(--border-light);
+    margin: 5px 0;
+}
+
+.sm-item.power { color: var(--color-error); }
+.sm-item.power svg { stroke: var(--color-error); }
+.sm-item.power:hover { background: rgba(255, 95, 86, 0.1); }
+
+/* ============================================================
+   8. ОКОННЫЙ МЕНЕДЖЕР (WINDOWS)
+   ============================================================ */
+.app-window {
+    position: absolute;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    box-shadow: var(--shadow-window);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 300px;
+    min-height: 200px;
+    transition: opacity 0.2s, transform 0.2s;
+    /* По умолчанию окна немного прозрачные, пока не в фокусе */
+    opacity: 0.95;
+}
+
+.app-window.focused {
+    box-shadow: var(--shadow-focus);
+    border-color: var(--border-accent);
+    opacity: 1;
+}
+
+.win-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-panel);
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-dark);
+    cursor: grab;
+}
+.win-titlebar:active { cursor: grabbing; }
+
+.win-title-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: bold;
+    color: #ddd;
+    pointer-events: none;
+}
+
+.win-icon {
+    font-family: var(--font-mono);
+    color: var(--accent);
+    font-size: 12px;
+}
+
+.win-controls { display: flex; gap: 5px; }
+
+.win-btn {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: none;
+    background: var(--border-light);
+    color: transparent; /* Текст скрыт, показывается при ховере */
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+.win-btn:hover { color: #fff; }
+.win-min:hover { background: var(--color-warn); }
+.win-max:hover { background: var(--color-ok); }
+.win-close:hover { background: var(--color-error); }
+
+.win-body {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-surface);
+}
+
+/* ============================================================
+   9. ПРИЛОЖЕНИЯ (APPS)
+   ============================================================ */
+
+/* --- 9.1 ТЕРМИНАЛ ВНУТРИ ОКНА --- */
+.term-app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #000;
+    font-family: var(--font-mono);
+    font-size: 14px;
+}
+
+.term-out {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    line-height: 1.5;
+    color: #ddd;
+    user-select: text;
+}
+
+.term-app .term-inputline {
+    border-top: 1px solid var(--border-light);
+    padding: 10px 15px;
+}
+
+.t-line { white-space: pre-wrap; word-break: break-all; }
+
+/* --- 9.2 ФАЙЛОВЫЙ МЕНЕДЖЕР --- */
+.files-app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--bg-surface);
+}
+
+.files-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border-dark);
+}
+
+.toolbar-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+.toolbar-btn:hover { background: var(--bg-hover); color: #fff; }
+
+.files-path {
+    flex: 1;
+    background: var(--bg-main);
+    border: 1px solid var(--border-light);
+    color: #ddd;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    outline: none;
+}
+
+.files-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 15px;
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.file-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+.file-item:hover { background: var(--bg-hover); }
+
+.file-icon {
+    font-family: var(--font-mono);
+    font-size: 24px;
+    color: var(--accent);
+}
+
+.file-name {
+    font-size: 12px;
+    text-align: center;
+    word-break: break-all;
+    color: #ddd;
+}
+
+/* --- 9.3 ТЕКСТОВЫЙ РЕДАКТОР --- */
+.editor-app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.editor-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 15px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border-dark);
+}
+
+.btn-save {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 12px;
+}
+.btn-save:hover { background: var(--accent-hover); }
+
+.editor-status {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.editor-area {
+    flex: 1;
+    background: #000;
+    color: #ddd;
+    border: none;
+    padding: 15px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    resize: none;
+    outline: none;
+    line-height: 1.5;
+}
+
+/* --- 9.4 СИСТЕМНЫЙ МОНИТОР (HTOP) --- */
+.sysmon-app {
+    display: flex;
+    flex-direction: column;
+    background: #000;
+    color: #ddd;
+    font-family: var(--font-mono);
+    height: 100%;
+}
+
+.sysmon-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--border-light);
+    background: var(--bg-surface);
+    font-weight: bold;
+}
+
+.sysmon-cpu {
+    padding: 15px;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 14px;
+}
+
+.sysmon-procs {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.sysmon-procs table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 13px;
+}
+
+.sysmon-procs th {
+    padding: 8px;
+    border-bottom: 1px solid var(--border-accent);
+    color: var(--text-muted);
+}
+
+.sysmon-procs td {
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border-dark);
+}
+
+.sysmon-procs tr:hover { background: var(--bg-hover); }
+
+/* --- 9.5 НАСТРОЙКИ СИСТЕМЫ (SETTINGS) --- */
+.settings-app {
+    display: flex;
+    height: 100%;
+    background: var(--bg-surface);
+}
+
+/* Стиль i3 (текстовый) */
+.settings-text {
+    font-family: var(--font-mono);
+    padding: 20px;
+    background: #000;
+    color: #fff;
+    flex-direction: column;
+}
+.settings-text input {
+    background: #111;
+    border: 1px solid var(--border-light);
+    color: var(--accent);
+    padding: 5px;
+    font-family: var(--font-mono);
+    outline: none;
+}
+.settings-text input:focus { border-color: var(--accent); }
+
+/* Стиль KDE (GUI с сайдбаром) */
+.settings-gui {
+    flex-direction: row;
+}
+.settings-sidebar {
+    width: 200px;
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border-dark);
+    padding: 10px 0;
+}
+.set-tab {
+    padding: 12px 20px;
+    font-size: 13px;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-left: 3px solid transparent;
+}
+.set-tab:hover { background: var(--bg-hover); color: #fff; }
+.set-tab.active {
+    background: var(--bg-hover);
+    color: #fff;
+    border-left-color: var(--accent);
+}
+
+.settings-content {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+}
+
+.setting-group {
+    margin-bottom: 25px;
+}
+
+.setting-group label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: #ddd;
+}
+
+.setting-group input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent);
+}
+
+.setting-group input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+/* Стиль GNOME (Мобильные карточки) */
+.settings-mobile {
+    flex-direction: column;
+    background: #f5f5f5;
+    color: #000;
+    padding: 20px;
+    overflow-y: auto;
+}
+.mobile-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* ============================================================
+   10. УВЕДОМЛЕНИЯ И МОДАЛЬНЫЕ ОКНА
+   ============================================================ */
+.welcome-toast {
+    position: absolute;
+    bottom: 60px;
+    right: 20px;
+    width: 350px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-left: 4px solid var(--accent);
+    border-radius: 6px;
+    padding: 15px 20px;
+    box-shadow: var(--shadow-window);
+    z-index: 2000;
+    animation: pop-in 0.3s ease;
+}
+
+.toast-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.toast-header h2 {
+    font-size: 14px;
+    color: var(--accent);
+    text-transform: uppercase;
+}
+.toast-body p { font-size: 13px; color: #ccc; margin-bottom: 5px; }
+.toast-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+/* Модальное окно выключения */
+.overlay-modal {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+}
+
+.modal-box {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 30px;
+    width: 400px;
+    text-align: center;
+    box-shadow: var(--shadow-focus);
+}
+
+.modal-box h2 {
+    color: var(--color-warn);
+    font-size: 18px;
+    margin-bottom: 15px;
+}
+
+.modal-box p { color: #ccc; font-size: 14px; margin-bottom: 25px; }
+
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.btn-cancel, .btn-confirm {
+    padding: 8px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    border: none;
+}
+.btn-cancel { background: var(--bg-hover); color: #fff; }
+.btn-cancel:hover { background: var(--border-light); }
+.btn-confirm { background: var(--color-error); color: #fff; }
+.btn-confirm:hover { background: #e04a42; }
+
+/* ============================================================
+   11. АДАПТИВНОСТЬ (RESPONSIVE)
+   ============================================================ */
+@media (max-width: 768px) {
+    .main-title { font-size: 48px; }
+    .choice-cards { flex-direction: column; }
+    .de-grid { grid-template-columns: 1fr; }
+    
+    .app-window {
+        width: 95vw !important;
+        height: 80vh !important;
+        left: 2.5vw !important;
+        top: 10vh !important;
+    }
+    
+    .settings-app { flex-direction: column; }
+    .settings-sidebar { width: 100%; display: flex; overflow-x: auto; border-right: none; border-bottom: 1px solid var(--border-dark); }
+    .set-tab { white-space: nowrap; border-left: none; border-bottom: 3px solid transparent; }
+    .set-tab.active { border-left-color: transparent; border-bottom-color: var(--accent); }
+}
+
+/* ============================================================
+   КОНЕЦ ФАЙЛА STYLE.CSS
+   ============================================================ */
