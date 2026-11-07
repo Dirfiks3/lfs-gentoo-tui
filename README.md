@@ -51,8 +51,3 @@
 
 No build tools, package managers, or servers are required. The project runs directly in any modern browser.
 
-### Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Dirfiks3/lfs-gentoo-tui.git
