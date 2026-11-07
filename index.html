@@ -1,1 +1,141 @@
 
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Интерактивный симулятор установки Linux From Scratch и Gentoo в терминале." />
+  <title>lfs-gentoo-tui — LFS/Gentoo Simulator</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ==========================================
+       ЭКРАН 1: Выбор дистрибутива
+       ========================================== -->
+  <section id="screen-choice" class="screen active">
+    <div class="choice-box">
+      
+      <!-- ASCII арт (оставил пустым, если захочешь вставить через JS) -->
+      <pre class="ascii-banner" id="choice-banner"></pre>
+      
+      <h1 class="main-title">DISTROSCOPE</h1>
+      
+      <p class="subtitle">// симулятор установки: Linux From Scratch & Gentoo</p>
+      <p class="hint">Выбери систему. Установка займёт <b>реальный час</b>. Выдержишь?</p>
+      
+      <!-- Карточки выбора -->
+      <div class="choice-cards">
+        <button class="card card-lfs" data-distro="lfs">
+          <!-- SVG иконка: Терминал -->
+          <svg class="card-logo" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 17 10 11 4 5"></polyline>
+            <line x1="12" y1="19" x2="20" y2="19"></line>
+          </svg>
+          <span class="card-name">LFS</span>
+          <span class="card-desc">Linux From Scratch.<br/>Собери систему с нуля.<br/>~150 пакетов из исходников.</span>
+          <span class="card-diff">Сложность: [██████████]</span>
+        </button>
+        
+        <button class="card card-gentoo" data-distro="gentoo">
+          <!-- SVG иконка: Шестеренка (Компиляция) -->
+          <svg class="card-logo" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <span class="card-name">GENTOO</span>
+          <span class="card-desc">Метадистрибутив.<br/>Portage, USE-флаги,<br/>всё компилируется под тебя.</span>
+          <span class="card-diff">Сложность: [███████░░░]</span>
+        </button>
+      </div>
+      
+      <p class="tip">Подсказка: после установки откроется рабочий стол. Там можно запустить терминал и написать <code>fastfetch</code>.</p>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       ЭКРАН 2: Установка (Терминал)
+       ========================================== -->
+  <section id="screen-install" class="screen">
+    <div class="terminal-window">
+      
+      <div class="term-titlebar">
+        <div class="term-dots">
+          <span class="dot red"></span>
+          <span class="dot yellow"></span>
+          <span class="dot green"></span>
+        </div>
+        <span class="term-title" id="install-title">root@livecd ~ # /bin/bash — установка</span>
+        <span class="term-clock" id="install-clock">00:00:00</span>
+      </div>
+      
+      <!-- Тело терминала, куда падают логи -->
+      <div class="term-body" id="install-term"></div>
+      
+      <!-- Строка ввода команд (скрыта по умолчанию, JS ее покажет) -->
+      <div class="term-inputline" id="install-inputline" style="display: none;">
+        <span class="prompt" id="install-prompt">root@livecd ~ #</span>
+        <input type="text" id="install-input" class="term-in" autocomplete="off" spellcheck="false" autofocus />
+      </div>
+
+      <div class="term-statusbar">
+        <span id="status-phase">READY</span>
+        <span id="status-eta">ETA: --:--:--</span>
+        <span id="status-percent">0%</span>
+      </div>
+      
+      <div class="progress-track">
+        <div class="progress-fill" id="install-progress"></div>
+      </div>
+      
+    </div>
+  </section>
+
+  <!-- ==========================================
+       ЭКРАН 3: Рабочий стол (Desktop)
+       ========================================== -->
+  <section id="screen-desktop" class="screen">
+    
+    <div class="desktop-bg" id="desktop-bg"></div>
+    <div class="desktop-icons" id="desktop-icons"></div>
+
+    <!-- Панель задач -->
+    <div class="taskbar">
+      <button class="start-btn" id="start-btn">[ <span id="de-name">i3</span> ]</button>
+      <div class="taskbar-windows" id="taskbar-windows"></div>
+      <div class="taskbar-right">
+        <span class="tb-info" id="tb-info">up 0 mins</span>
+        <span class="tb-clock" id="desktop-clock">--:--</span>
+      </div>
+    </div>
+
+    <!-- Шаблон для окон (JS клонирует его) -->
+    <template id="window-template">
+      <div class="app-window">
+        <div class="win-titlebar">
+          <span class="win-icon">&gt;_</span>
+          <span class="win-title">window</span>
+          <span class="win-spacer"></span>
+          <button class="win-btn win-min">_</button>
+          <button class="win-btn win-close">X</button>
+        </div>
+        <div class="win-body"></div>
+      </div>
+    </template>
+
+    <!-- Приветственное окно после установки -->
+    <div class="welcome-toast hidden" id="welcome-toast">
+      <h2>СИСТЕМА УСТАНОВЛЕНА</h2>
+      <p id="welcome-text">Добро пожаловать. Кликни по значкам на рабочем столе.<br/>
+      Совет: открой <b>Terminal</b> и напиши <code>fastfetch</code>, <code>ls</code>, <code>neofetch</code>, <code>help</code>.</p>
+    </div>
+    
+  </section>
+
+  <!-- Подключение скриптов (порядок важен) -->
+  <script src="js/data.js"></script>
+  <script src="js/installer.js"></script>
+  <script src="js/desktop.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
