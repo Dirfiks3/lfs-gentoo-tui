@@ -24,38 +24,25 @@
 
 ## Overview
 
-DistroScope is a browser-based terminal simulator that recreates the process of installing two Linux distributions: **Linux From Scratch (LFS)** and **Gentoo**. The project is built entirely with vanilla JavaScript and does not require a backend. It is designed for educational purposes and to demonstrate the pain and satisfaction of manual Linux installation.
+DistroScope is a browser-based terminal simulator that recreates the grueling process of installing **Linux From Scratch (LFS)** and **Gentoo**. The project is built entirely with vanilla JavaScript, requires no backend, and works directly in your browser. 
 
-## Features
+## The Philosophy
 
-- **Interactive Terminal:** The installation process requires manual command input. The terminal responds to user commands and returns errors for invalid entries.
-- **Realistic Timers:** LFS installation takes **1 hour**, Gentoo takes **30 minutes** (accelerated mode available in code).
-- **Dynamic Logs:** Real-time compilation logs with syntax highlighting, simulated package builds, and kernel compilation output.
-- **Minimalist Desktop:** After installation, the user is dropped into a lightweight, window-manager-like environment with a functional terminal and `fastfetch`.
-- **Strict UI:** No emojis, no gradients, no distractions. Built for focus.
+Why build a simulator for something you can just download as an ISO? Because distro-hopping is easy, but compiling your own kernel from scratch is a rite of passage. DistroScope was built to capture that specific feeling: the anxiety of manual partitioning, the endless scrolling of `make` output, and the pure satisfaction when `[  OK  ] Reached target Multi-User System` finally appears on the screen.
 
 ## Preview
 
-<div align="center">
-  <img src="https://upload.wikimedia.org/wikipedia/commons/1/15/Compiling_Linux_kernel.png" alt="Terminal Preview" width="800" style="border-radius: 8px; border: 1px solid #333;" />
-</div>
-
-*(Note: The image above is a placeholder. Once you take a screenshot of your actual simulator, replace the `src` link with a local image like `screenshot.png`.)*
-
-## Tech Stack
-
-- **Frontend:** Vanilla JavaScript (ES6+), HTML5, CSS3
-- **Fonts:** System monospace stack (no external dependencies)
-- **Architecture:** Modular IIFE pattern (`data.js`, `installer.js`, `desktop.js`, `app.js`)
-
-## Getting Started
-
-### Prerequisites
-
-No build tools, package managers, or servers are required. The project runs directly in any modern browser.
-
-### Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Dirfiks3/lfs-gentoo-tui.git
+```text
+┌────────────────────────────────────────────────────────┐
+│ root@livecd ~ # emerge -av @world — Gentoo    00:14:32 │
+├────────────────────────────────────────────────────────┤
+│ Calculating dependencies... done!                      │
+│ [ebuild N] sys-kernel/gentoo-sources-6.6.30            │
+│ [ebuild N] sys-devel/gcc-13.2.1-r5                     │
+│ >>> Emerging (1 of 214) app-arch/bzip2-1.0.8-r5        │
+│   CC       foo/bar.o                                   │
+│   CCLD     libtool                                     │
+│ >>> Jobs for 214 merges started at task progress 4%    │
+│                                                        │
+│ [████████████████████░░░░░░░░░░░░░░░░░░░] 42.1%        │
+└────────────────────────────────────────────────────────┘
