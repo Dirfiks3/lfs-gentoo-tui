@@ -1,17 +1,18 @@
 /* ============================================================
-   style.css — Строгий брутализм, монохром, без неона.
+   style.css — Полный стиль для симулятора ОС
    ============================================================ */
 
 :root {
-  /* Палитра: черный, белый и оттенки серого */
   --bg: #0a0a0a;
-  --panel: #121212;
+  --panel: #1a1a1a;
   --border: #333333;
   --text: #ffffff;
   --text-dim: #888888;
   
-  /* Системные шрифты: без Google, без интернета, максимальная скорость */
-  --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --accent-lfs: #4af626;
+  --accent-gentoo: #a855f7;
+  
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --mono: Consolas, "Courier New", monospace;
 }
 
@@ -27,6 +28,7 @@ html, body {
   color: var(--text);
   font-family: var(--sans);
   overflow: hidden;
+  user-select: none;
 }
 
 .screen { 
@@ -39,7 +41,7 @@ html, body {
 }
 
 /* ============================================================
-   ЭКРАН 1: ВЫБОР ДИСТРИБУТИВА (Брутальный минимализм)
+   ЭКРАН 1: ВЫБОР ДИСТРИБУТИВА
    ============================================================ */
 #screen-choice {
   display: none;
@@ -56,11 +58,8 @@ html, body {
   width: 100%;
 }
 
-.ascii-banner { 
-  display: none; /* Прячем ASCII-арт, тут он лишний */
-}
+.ascii-banner { display: none; }
 
-/* Огромный, четкий заголовок */
 .main-title {
   font-size: 72px;
   font-weight: 900;
@@ -78,7 +77,6 @@ html, body {
   line-height: 1.5;
 }
 
-/* Плашка с подсказкой */
 .hint { 
   display: inline-block;
   border: 1px solid var(--border);
@@ -88,10 +86,7 @@ html, body {
   margin-bottom: 40px;
   font-size: 14px;
 }
-.hint b { 
-  color: var(--text); 
-  font-weight: bold; 
-}
+.hint b { color: var(--text); font-weight: bold; }
 
 .tip { 
   margin-top: 40px; 
@@ -114,13 +109,12 @@ html, body {
   flex-wrap: wrap; 
 }
 
-/* Карточки LFS и Gentoo */
 .card {
   flex: 1;
   min-width: 280px;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 4px; /* Строгие, почти прямые углы */
+  border-radius: 4px;
   color: var(--text);
   font-family: var(--sans);
   cursor: pointer;
@@ -131,7 +125,6 @@ html, body {
   transition: all 0.15s ease;
 }
 
-/* Жесткий инверт цветов при наведении */
 .card:hover { 
   background: var(--text);
   color: var(--bg);
@@ -144,18 +137,9 @@ html, body {
   margin-bottom: 20px;
 }
 
-/* Цвета названий дистрибутивов */
-.card-lfs .card-name, .card-lfs .card-logo { 
-  color: #4af626 !important; /* Терминальный зеленый для LFS */
-}
-.card-gentoo .card-name, .card-gentoo .card-logo { 
-  color: #a855f7 !important; /* Фиолетовый для Gentoo */
-}
-
-/* При наведении иконки и текст становятся черными (инверсия) */
-.card:hover .card-name, .card:hover .card-logo { 
-  color: var(--bg) !important; 
-}
+.card-lfs .card-name, .card-lfs .card-logo { color: var(--accent-lfs) !important; }
+.card-gentoo .card-name, .card-gentoo .card-logo { color: var(--accent-gentoo) !important; }
+.card:hover .card-name, .card:hover .card-logo { color: var(--bg) !important; }
 
 .card-name { 
   font-size: 24px; 
@@ -170,9 +154,7 @@ html, body {
   line-height: 1.5; 
   margin-bottom: 30px;
 }
-.card:hover .card-desc { 
-  color: #444; /* Текст описания темнеет при ховере */
-}
+.card:hover .card-desc { color: #444; }
 
 .card-diff { 
   margin-top: auto; 
@@ -183,133 +165,143 @@ html, body {
 }
 
 /* ============================================================
-   ЭКРАН 2: ТЕРМИНАЛ (Настоящий Linux, без веб-понтов)
+   ЭКРАН 2: ТЕРМИНАЛ (На весь экран)
    ============================================================ */
 #screen-install {
-  background: #000000; /* Абсолютно черный фон */
+  background: #0c0c0c; 
   display: none; 
-  place-items: center;
 }
 #screen-install.active { 
-  display: grid; 
+  display: flex; 
 }
 
-/* Само окно терминала — строгое, прямоугольное */
 .terminal-window {
-  width: 90vw; 
-  height: 85vh;
-  background: #000000;
-  border: 1px solid #333333;
-  border-radius: 0; /* Никаких скруглений, как в старых консолях */
+  width: 100vw; 
+  height: 100vh;
+  background: #0c0c0c;
   display: flex; 
   flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 0 20px rgba(0,0,0,0.8);
 }
 
+/* Верхняя панель */
 .term-titlebar {
   display: flex; 
   align-items: center; 
-  gap: 8px;
-  padding: 10px 14px;
-  background: #111111;
-  border-bottom: 1px solid #333333;
-  font-family: var(--mono);
+  background: #1e1e1e;
+  height: 36px;
+  padding: 0 15px;
   font-size: 13px;
+  border-bottom: 1px solid #333;
 }
 
-/* Кружки делаем просто серыми, чтобы не отвлекали */
-.dot { width: 12px; height: 12px; border-radius: 50%; }
-.dot.red { background: #333; } 
-.dot.yellow { background: #333; } 
-.dot.green { background: #333; }
+.term-menu { display: flex; gap: 15px; margin-right: 20px; color: #aaa; }
+.term-menu span { cursor: pointer; }
+.term-menu span:hover { color: #fff; }
 
-.term-title { 
-  margin-left: 12px; 
-  color: #888; 
-  flex: 1; 
-}
-.term-clock { 
-  color: #fff; 
-}
+.term-title { flex: 1; text-align: center; color: #888; font-weight: bold; }
 
-/* Тело терминала — тут всё как в консоли */
+.term-controls { display: flex; gap: 10px; }
+.ctrl {
+  background: transparent;
+  border: none;
+  color: #aaa;
+  font-size: 14px;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+}
+.ctrl:hover { background: #333; color: #fff; }
+.ctrl.close:hover { background: #ff5f56; color: #fff; }
+
+/* Вкладки */
+.term-tabs {
+  display: flex;
+  background: #151515;
+  padding: 5px 10px 0;
+  gap: 5px;
+}
+.term-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #0c0c0c;
+  padding: 8px 15px;
+  border-radius: 6px 6px 0 0;
+  font-size: 12px;
+  color: #ccc;
+  border: 1px solid #333;
+  border-bottom: none;
+}
+.term-tab.active { background: #0c0c0c; color: #fff; }
+.tab-close { font-family: var(--mono); font-size: 10px; opacity: 0.5; }
+.term-tab-new { background: transparent; border: none; color: #888; font-size: 18px; cursor: pointer; padding: 0 10px; }
+
+/* Тело терминала */
 .term-body {
   flex: 1; 
   overflow-y: auto; 
   padding: 15px;
-  font-family: var(--mono); /* Только моноширинный шрифт */
+  font-family: var(--mono);
   font-size: 15px; 
-  line-height: 1.4;
-  color: #cccccc; /* Светло-серый, классика */
+  line-height: 1.5;
+  color: #cccccc;
+  user-select: text;
 }
 
-/* Классические линуксовые цвета для логов */
-.log-cmd { color: #4af626; } /* Ярко-зеленый для команд */
+.log-cmd { color: #4af626; } 
 .log-out { color: #cccccc; }
-.log-ok { color: #4af626; }
+.log-ok { color: #4af626; font-weight: bold; }
 .log-err { color: #ff5f56; }
 .log-info { color: #58a6ff; }
 .log-dim { color: #666; }
 
-/* Строка ввода команд */
+/* Ввод */
 .term-inputline {
   display: flex;
   gap: 8px;
   padding: 10px 15px;
-  border-top: 1px solid #333;
   font-family: var(--mono);
   font-size: 15px;
+  background: #0c0c0c;
 }
-.prompt { color: #4af626; white-space: nowrap; }
+.prompt { color: #4af626; font-weight: bold; }
 .term-in {
   flex: 1;
   background: transparent;
   border: none;
   outline: none;
-  color: #fff;
+  color: #ffffff;
   font-family: var(--mono);
   font-size: 15px;
-  caret-color: #4af626; /* Зеленый курсор */
+  caret-color: #4af626;
 }
 
-/* Статусбар внизу */
+/* Статусбар */
 .term-statusbar {
   display: flex; 
   justify-content: space-between;
-  padding: 8px 15px; 
-  font-size: 13px;
-  background: #111111; 
-  border-top: 1px solid #333333;
-  font-family: var(--mono);
+  padding: 5px 15px; 
+  font-size: 12px;
+  background: #1e1e1e; 
   color: #888;
+  border-top: 1px solid #333;
 }
-#status-phase { color: #4af626; }
+#status-phase { color: #4af626; font-weight: bold; }
 
-/* Полоса загрузки — просто зеленый блок */
-.progress-track { 
-  height: 4px; 
-  background: #333; 
-}
-.progress-fill {
-  height: 100%; 
-  width: 0%;
-  background: #4af626;
-  transition: width 0.3s ease;
-}
+.progress-track { height: 3px; background: #333; }
+.progress-fill { height: 100%; width: 0%; background: #4af626; transition: width 0.3s; }
 
 /* ============================================================
-   ЭКРАН 3: РАБОЧИЙ СТОЛ (Desktop)
+   ЭКРАН 3: РАБОЧИЙ СТОЛ
    ============================================================ */
 #screen-desktop { 
   position: relative; 
-  background: var(--bg); 
+  background: #1a1a1a; /* Темный фон */
 }
 
-.desktop-bg { 
-  display: none; 
-}
-
+/* Иконки на столе */
 .desktop-icons {
   position: absolute; 
   top: 20px; 
@@ -317,15 +309,15 @@ html, body {
   z-index: 1;
   display: flex; 
   flex-direction: column; 
-  gap: 10px;
+  gap: 15px;
 }
 
 .desk-icon {
-  width: 100px; 
+  width: 90px; 
   padding: 15px 10px;
   background: transparent; 
   border: 1px solid transparent; 
-  border-radius: 0;
+  border-radius: 4px;
   color: var(--text); 
   font-family: var(--sans); 
   font-size: 12px;
@@ -336,211 +328,195 @@ html, body {
   cursor: pointer; 
   transition: all 0.15s;
 }
-
 .desk-icon:hover { 
-  background: var(--panel); 
-  border-color: var(--border); 
+  background: rgba(255, 255, 255, 0.1); 
+  border-color: rgba(255, 255, 255, 0.2); 
 }
-
-.di-img { 
-  font-size: 24px; 
-  font-family: var(--mono);
-  font-weight: bold;
-}
+.di-img svg { stroke: #fff; }
+.di-label { text-shadow: 1px 1px 2px #000; }
 
 /* Панель задач */
 .taskbar {
   position: absolute; 
   bottom: 0; left: 0; right: 0; 
-  height: 48px; 
-  z-index: 50;
+  height: 44px; 
+  z-index: 100;
   display: flex; 
   align-items: center; 
-  gap: 12px; 
-  padding: 0 16px;
-  background: var(--bg);
-  border-top: 1px solid var(--border);
+  gap: 10px; 
+  padding: 0 10px;
+  background: #111;
+  border-top: 1px solid #333;
 }
 
 .start-btn {
   background: transparent; 
   color: var(--text);
-  border: 1px solid var(--border); 
-  border-radius: 0;
-  padding: 6px 16px; 
+  border: 1px solid transparent; 
+  border-radius: 4px;
+  padding: 6px 12px; 
   font-family: var(--sans); 
   font-size: 13px; 
-  font-weight: bold; 
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-
-.start-btn:hover { 
-  background: var(--text); 
-  color: var(--bg); 
-}
+.start-btn:hover { background: #333; }
 
 .taskbar-windows { 
   display: flex; 
-  gap: 8px; 
+  gap: 5px; 
   flex: 1; 
   overflow-x: auto; 
 }
 
 .tb-win {
-  background: transparent; 
-  color: var(--text-dim);
-  border: none; 
-  border-bottom: 2px solid transparent;
-  padding: 8px 12px; 
+  background: #222; 
+  color: #ccc;
+  border: 1px solid #333; 
+  border-radius: 4px;
+  padding: 6px 12px; 
   font-family: var(--sans); 
-  font-size: 13px; 
+  font-size: 12px; 
   cursor: pointer;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-
 .tb-win.active { 
-  color: var(--text); 
-  border-bottom: 2px solid var(--text); 
+  background: #444; 
+  color: #fff;
+  border-color: #555;
 }
 
 .taskbar-right { 
   display: flex; 
-  gap: 16px; 
-  color: var(--text-dim); 
-  font-size: 13px; 
-  font-weight: bold; 
+  align-items: center;
+  gap: 15px; 
+  color: #ccc; 
+  font-size: 12px; 
 }
-.tb-clock { color: var(--text); }
+.sys-tray { display: flex; gap: 8px; color: #aaa; }
+.tb-clock { color: #fff; font-weight: bold; }
 
-/* Окна приложений */
+/* Окна */
 .app-window {
   position: absolute; 
   z-index: 10;
   min-width: 300px; 
-  min-height: 150px;
-  background: var(--bg); 
-  border: 1px solid var(--border);
-  border-radius: 0; 
+  min-height: 200px;
+  background: #1e1e1e; 
+  border: 1px solid #444;
+  border-radius: 6px; 
   display: flex; 
   flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.8);
 }
 
 .app-window.focused { 
-  border-color: var(--text); 
-}
-.app-window.minimized { 
-  display: none; 
+  border-color: #666; 
+  box-shadow: 0 15px 40px rgba(0,0,0,0.8);
 }
 
 .win-titlebar {
   display: flex; 
   align-items: center; 
-  gap: 8px;
-  padding: 10px 14px; 
+  gap: 10px;
+  padding: 10px 15px; 
   cursor: grab; 
-  user-select: none;
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
+  background: #2a2a2a;
+  border-bottom: 1px solid #111;
   font-family: var(--sans); 
   font-size: 13px; 
   font-weight: bold;
+  color: #eee;
 }
 
 .win-spacer { flex: 1; }
-
 .win-btn {
   background: transparent; 
-  border: 1px solid transparent; 
-  color: var(--text-dim);
-  width: 24px; 
-  height: 24px; 
-  border-radius: 0; 
+  border: none; 
+  color: #aaa;
+  width: 20px; height: 20px; 
+  border-radius: 4px; 
   cursor: pointer; 
-  font-family: var(--mono);
-  font-weight: bold;
+  display: flex; align-items: center; justify-content: center;
 }
+.win-btn:hover { background: #444; color: #fff; }
+.win-close:hover { background: #ff5f56; color: #fff; }
 
-.win-btn:hover { 
-  border-color: var(--border); 
-  color: var(--text); 
+.win-body { flex: 1; overflow: auto; display: flex; flex-direction: column; }
+
+/* Терминал на рабочем столе */
+.term-app { display: flex; flex-direction: column; height: 100%; background: #0c0c0c; font-family: var(--mono); }
+.term-out { flex: 1; overflow-y: auto; padding: 15px; line-height: 1.5; color: #ccc; font-size: 14px; user-select: text; }
+.term-app .term-inputline { padding: 10px 15px; border-top: 1px solid #222; }
+
+/* Приложения: Файлы и Текст */
+.files-app { display: flex; flex-direction: column; height: 100%; background: #1e1e1e; }
+.files-toolbar { padding: 10px; border-bottom: 1px solid #111; display: flex; align-items: center; gap: 10px; }
+.files-list { list-style: none; padding: 10px; overflow-y: auto; color: #ccc; font-size: 13px; }
+.files-list li { padding: 8px 10px; border-bottom: 1px solid #2a2a2a; display: flex; align-items: center; gap: 10px; }
+.files-list li:hover { background: #333; }
+
+.text-app { padding: 20px; color: #ccc; font-size: 14px; line-height: 1.6; overflow-y: auto; height: 100%; background: #1e1e1e; }
+.text-app h3 { color: #fff; margin-bottom: 10px; }
+.text-app code { font-family: var(--mono); background: #111; padding: 2px 6px; border-radius: 4px; color: #4af626; }
+.text-app hr { border: none; border-top: 1px solid #333; margin: 15px 0; }
+
+/* Меню Пуск */
+.start-menu {
+  position: absolute;
+  bottom: 44px;
+  left: 0;
+  width: 250px;
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 0 6px 0 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 0;
+  box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
 }
-.win-close:hover { 
-  background: #333; 
-  color: #fff; 
+.start-menu.hidden { display: none; }
+.start-menu-header { padding: 10px 20px; font-size: 12px; text-transform: uppercase; color: #666; font-weight: bold; }
+.sm-item {
+  background: transparent;
+  border: none;
+  color: #ccc;
+  padding: 10px 20px;
+  text-align: left;
+  font-family: var(--sans);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
+.sm-item:hover { background: #333; color: #fff; }
+.start-menu-separator { height: 1px; background: #333; margin: 5px 0; }
 
-.win-body { 
-  flex: 1; 
-  overflow: auto; 
-  font-size: 13px; 
-}
-
-/* Внутренний терминал на рабочем столе */
-.term-app { 
-  display: flex; 
-  flex-direction: column; 
-  height: 100%; 
-  background: #000; 
-  font-family: var(--mono); 
-}
-
-.term-out { 
-  flex: 1; 
-  overflow-y: auto; 
-  padding: 14px; 
-  line-height: 1.6; 
-  color: #ccc; 
-}
-
-.term-inputline { 
-  display: flex; 
-  gap: 8px; 
-  padding: 10px 14px; 
-  border-top: 1px solid #333; 
-}
-
-.t-file { color: #58a6ff; }
-.t-dotfile { color: #888; }
-.t-err { color: #ff5f56; }
-.t-ok { color: #4af626; }
-
-/* Файловый менеджер и About */
-.about-app { padding: 20px; line-height: 1.6; }
-.about-app h3 { margin-bottom: 10px; color: var(--text); }
-.about-app code { font-family: var(--mono); background: var(--panel); padding: 2px 6px; border-radius: 4px; }
-.about-app .dim { color: var(--text-dim); font-size: 12px; margin-top: 15px; }
-.about-app ul { padding-left: 20px; }
-
-.files-app { padding: 15px; }
-.files-app ul { list-style: none; }
-.files-app li { margin-bottom: 15px; }
-.file-preview {
-  margin-top: 8px; 
-  padding: 10px; 
-  font-family: var(--mono);
-  font-size: 12px;
-  background: var(--panel); 
-  border: 1px solid var(--border); 
-  color: var(--text-dim); 
-  white-space: pre-wrap;
-}
-
-/* Приветственный тост */
+/* Тост */
 .welcome-toast {
   position: absolute; 
-  top: 15%; 
-  left: 50%; 
-  transform: translateX(-50%);
-  z-index: 100; 
-  width: min(500px, 90vw);
-  background: var(--bg);
-  border: 1px solid var(--text);
-  border-radius: 0;
-  padding: 30px; 
-  text-align: center;
+  bottom: 60px; 
+  right: 20px;
+  z-index: 300; 
+  width: 350px;
+  background: #1e1e1e;
+  border: 1px solid #444;
+  border-left: 4px solid #4af626;
+  border-radius: 4px;
+  padding: 15px 20px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+  font-size: 13px;
 }
-
 .welcome-toast.hidden { display: none; }
-.welcome-toast h2 { font-size: 20px; text-transform: uppercase; margin-bottom: 15px; }
-.welcome-toast code { font-family: var(--mono); color: var(--text); background: var(--panel); padding: 2px 6px; border-radius: 4px; }
+.toast-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; color: #4af626; }
+.toast-header h2 { font-size: 14px; font-weight: bold; text-transform: uppercase; }
+.welcome-toast p { color: #ccc; line-height: 1.4; }
+.welcome-toast code { font-family: var(--mono); background: #111; padding: 2px 4px; border-radius: 3px; }
