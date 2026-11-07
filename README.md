@@ -8,8 +8,11 @@
   <img src="https://img.shields.io/badge/Status-Active-success?style=flat-square" />
 </div>
 
+<br />
+
 <div align="center">
-  <a href="READMEru.md">Русская версия</a>
+  <a href="READMEru.md">Русская версия (Russian)</a> | 
+  <a href="help.md">Documentation / Guide</a>
 </div>
 
 ---
@@ -22,10 +25,14 @@ Because compiling your own kernel from scratch is a rite of passage. I built thi
 
 ## Core Features
 - **Interactive Terminal:** Type commands manually to progress. Type garbage and get a `command not found`.
-- **Realistic Timers:** LFS takes 1 hour, Gentoo takes 30 minutes of real time.
+- **Realistic Timers:** LFS takes 10 minutes, Gentoo takes 10 minutes of real time.
 - **Dynamic Logs:** Real-time compilation noise and kernel build outputs.
 - **Setup Wizard:** After compiling, choose your DE: **KDE, GNOME, XFCE, or i3wm**. The UI and settings adapt to your choice.
 - **Full Desktop:** Custom window manager (drag, snap), functional terminal (`fastfetch`, `htop`), and file manager.
+
+## Documentation
+Need help navigating the installation or understanding the commands? 
+Check out the **[Full Guide & Commands (help.md)](help.md)**. It contains step-by-step instructions for both LFS and Gentoo, along with links to the official real-world manuals.
 
 ## Getting Started
 No builds required. Just clone and open.
