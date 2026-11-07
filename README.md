@@ -36,8 +36,11 @@ DistroScope is a browser-based terminal simulator that recreates the process of 
 
 ## Preview
 
-<!-- Замени ссылку ниже на реальный скриншот твоего проекта -->
-![DistroScope UI Preview](https://via.placeholder.com/1000x500/0a0a0a/ffffff?text=Terminal+Simulator+Screenshot)
+<div align="center">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/1/15/Compiling_Linux_kernel.png" alt="Terminal Preview" width="800" style="border-radius: 8px; border: 1px solid #333;" />
+</div>
+
+*(Note: The image above is a placeholder. Once you take a screenshot of your actual simulator, replace the `src` link with a local image like `screenshot.png`.)*
 
 ## Tech Stack
 
