@@ -8,7 +8,6 @@
     <title>lfs-gentoo-tui — LFS/Gentoo Simulator</title>
     <link rel="stylesheet" href="css/style.css" />
     
-    <!-- Встроенные стили для предотвращения мигания при загрузке -->
     <style>
         body { background-color: #0a0a0a; color: #fff; margin: 0; font-family: monospace; }
         .screen { display: none; }
@@ -19,126 +18,98 @@
 
     <!-- =========================================================================
          БИБЛИОТЕКА SVG-ИКОНОК (СПРАЙТЫ)
-         Определяем все иконки один раз, чтобы использовать их по всему проекту.
          ========================================================================= -->
     <svg style="display: none;" xmlns="http://www.w3.org/2000/svg">
-        <!-- Терминал -->
         <symbol id="icon-terminal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="4 17 10 11 4 5"></polyline>
             <line x1="12" y1="19" x2="20" y2="19"></line>
         </symbol>
-        <!-- Папка / Файлы -->
         <symbol id="icon-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
         </symbol>
-        <!-- Файл -->
         <symbol id="icon-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
             <polyline points="13 2 13 9 20 9"></polyline>
         </symbol>
-        <!-- Настройки / Шестеренка -->
         <symbol id="icon-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"></circle>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
         </symbol>
-        <!-- Информация -->
         <symbol id="icon-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
             <line x1="12" y1="16" x2="12" y2="12"></line>
             <line x1="12" y1="8" x2="12.01" y2="8"></line>
         </symbol>
-        <!-- Книга / Руководство -->
         <symbol id="icon-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
         </symbol>
-        <!-- Питание -->
         <symbol id="icon-power" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
             <line x1="12" y1="2" x2="12" y2="12"></line>
         </symbol>
-        <!-- Перезагрузка -->
         <symbol id="icon-reboot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M23 4v6h-6"></path>
             <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
         </symbol>
-        <!-- Wi-Fi -->
         <symbol id="icon-wifi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
             <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
             <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
             <line x1="12" y1="20" x2="12.01" y2="20"></line>
         </symbol>
-        <!-- Батарея -->
         <symbol id="icon-battery" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <rect x="1" y="6" width="18" height="12" rx="2" ry="2"></rect>
             <line x1="23" y1="13" x2="23" y2="11"></line>
         </symbol>
-        <!-- Звук -->
         <symbol id="icon-volume" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
             <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
         </symbol>
-        <!-- Закрыть -->
-        <symbol id="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-        </symbol>
     </svg>
 
-
     <!-- =========================================================================
-         ГЛАВНЫЙ КОНТЕЙНЕР ПРИЛОЖЕНИЯ
+         ГЛАВНЫЙ КОНТЕЙНЕР
          ========================================================================= -->
     <div id="app-container">
 
-
-        <!-- =======================================================================
-             ЭКРАН 0: ЗАГРУЗЧИК (BOOTLOADER)
-             Имитация BIOS/UEFI и GRUB. Появляется на долю секунды перед выбором.
-             ======================================================================= -->
+        <!-- ЭКРАН 0: ЗАГРУЗЧИК (BIOS/GRUB) -->
         <section id="screen-boot" class="screen">
             <div class="boot-container">
                 <pre class="boot-ascii">
-    _____  _____ _______ _____   _____  ____   _____ _______ ______ _____  
-   |  __ \|_   _/ ____|_   _| / ____|/ __ \ / ____|__   __|  ____|  __ \ 
-   | |  | | | || (___   | |  | (___ | |  | | (___    | |  | |__  | |__) |
-   | |  | | | |\___ \  | |   \___ \| |  | |\___ \   | |  |  __| |  ___/ 
-   | |__| |_| |____) |_| |_  ____) | |__| |____) |  | |  | |____| |     
-   |_____/|_____|_____/|_____||_____/ \____/|_____/   |_|  |______|_|     
+    _  __ _____ ____    ____ _____ _   _ _____ _____ ____    _____ _   _ ___ 
+   | |/ _|  ___/ ___|  / ___| ____| \ | |_   _| ____/ ___|  |_   _| | | |_ _|
+   | | |_| |_  \___ \ | |  _|  _| |  \| | | | |  _| \___ \    | | | | | || |
+   | |  _|  _|  ___) || |_| | |___| |\  | | | | |___ ___) |   | | | |_| || |
+   |_|_| |_|   |____/  \____|_____|_| \_| |_| |_____|____/    |_|  \___/|___|
                 </pre>
                 <div class="boot-info">
-                    <p>DistroScope Bootloader v2.0.1</p>
-                    <p>Initializing hardware... [OK]</p>
+                    <p>lfs-gentoo-tui Bootloader v1.0</p>
+                    <p>Initializing virtual hardware... [OK]</p>
                     <p>Mounting virtual filesystems... [OK]</p>
                     <p>Loading kernel modules... [OK]</p>
                     <br>
-                    <p class="blink-text">Press any key to enter boot menu...</p>
+                    <p class="blink-text">Press any key to continue...</p>
                 </div>
             </div>
         </section>
 
-
-        <!-- =======================================================================
-             ЭКРАН 1: ВЫБОР ДИСТРИБУТИВА (BOOT MENU)
-             ======================================================================= -->
+        <!-- ЭКРАН 1: ВЫБОР ДИСТРИБУТИВА -->
         <section id="screen-choice" class="screen active">
             <div class="choice-box">
-                
                 <div class="menu-header">
-                    <h1 class="main-title">DISTROSCOPE OS</h1>
-                    <p class="subtitle">// SYSTEM INSTALLATION SIMULATOR</p>
+                    <h1 class="main-title">lfs-gentoo-tui</h1>
+                    <p class="subtitle">// INSTALLATION SIMULATOR</p>
                 </div>
                 
                 <div class="menu-divider"></div>
                 
                 <div class="menu-instructions">
-                    <p>ВЫБЕРИТЕ ЦЕЛЕВУЮ СИСТЕМУ ДЛЯ УСТАНОВКИ</p>
-                    <p class="hint">Внимание: установка требует ручной компиляции. Процесс может занять реальный час. Вы уверены?</p>
+                    <p>ВЫБЕРИТЕ ЦЕЛЕВУЮ СИСТЕМУ</p>
+                    <p class="hint">Внимание: установка требует ручной компиляции и займет реальное время.</p>
                 </div>
 
                 <div class="choice-cards">
-                    
                     <!-- LFS -->
                     <button class="card card-lfs" data-distro="lfs">
                         <div class="card-icon-wrapper">
@@ -147,9 +118,9 @@
                         <div class="card-content">
                             <span class="card-name">Linux From Scratch</span>
                             <span class="card-version">v12.2</span>
-                            <span class="card-desc">Собери ядро и ~150 пакетов с нуля. Идеальное понимание того, как работает Linux. Никаких бинарников.</span>
+                            <span class="card-desc">Собери ядро и ~150 пакетов с нуля. Идеальное понимание работы Linux. Никаких бинарников.</span>
                             <div class="card-diff">
-                                <span>УРОВЕНЬ СЛОЖНОСТИ:</span>
+                                <span>СЛОЖНОСТЬ:</span>
                                 <div class="progress-bar-small"><div style="width: 100%"></div></div>
                             </div>
                         </div>
@@ -163,9 +134,9 @@
                         <div class="card-content">
                             <span class="card-name">Gentoo Linux</span>
                             <span class="card-version">Stage3 (OpenRC)</span>
-                            <span class="card-desc">Метадистрибутив с Portage. Настрой USE-флаги и скомпилируй мир под себя. Оптимизация на максимум.</span>
+                            <span class="card-desc">Метадистрибутив с Portage. Настрой USE-флаги и скомпилируй мир под себя.</span>
                             <div class="card-diff">
-                                <span>УРОВЕНЬ СЛОЖНОСТИ:</span>
+                                <span>СЛОЖНОСТЬ:</span>
                                 <div class="progress-bar-small"><div style="width: 80%"></div></div>
                             </div>
                         </div>
@@ -173,149 +144,81 @@
                 </div>
 
                 <div class="menu-footer">
-                    <p>Используйте <b>Tab</b> для навигации и <b>Enter</b> для выбора.</p>
-                    <p class="dim">(c) 2026 DistroScope Project. Open Source MIT License.</p>
+                    <p class="dim">(c) 2026 lfs-gentoo-tui Project. MIT License.</p>
                 </div>
             </div>
         </section>
 
-
         <!-- =======================================================================
-             ЭКРАН 2: УСТАНОВКА (ТЕРМИНАЛ)
+             ЭКРАН 2: УСТАНОВКА (ИДЕАЛЬНЫЙ ТЕРМИНАЛ)
+             Здесь мы убрали все лишнее, оставив только чистый CMD.
              ======================================================================= -->
         <section id="screen-install" class="screen">
             <div class="terminal-window">
                 
-                <!-- Titlebar -->
-                <div class="term-titlebar">
-                    <div class="term-menu">
-                        <span class="menu-item">Файл</span>
-                        <span class="menu-item">Правка</span>
-                        <span class="menu-item">Вид</span>
-                        <span class="menu-item">Терминал</span>
-                        <span class="menu-item">Вкладки</span>
-                        <span class="menu-item">Справка</span>
-                    </div>
-                    <div class="term-title" id="install-title">root@livecd: ~</div>
-                    <div class="term-controls">
-                        <button class="ctrl min" title="Свернуть">_</button>
-                        <button class="ctrl max" title="Развернуть">□</button>
-                        <button class="ctrl close" title="Закрыть">X</button>
-                    </div>
-                </div>
+                <!-- Скрытый заголовок (нужен для JS, чтобы определять дистрибутив) -->
+                <div id="install-title" style="display:none;">root@livecd</div>
 
-                <!-- Вкладки -->
-                <div class="term-tabs">
-                    <div class="term-tab active">
-                        <svg class="tab-icon"><use href="#icon-terminal"></use></svg>
-                        <span class="tab-text">bash — установка</span>
-                        <svg class="tab-close"><use href="#icon-x"></use></svg>
-                    </div>
-                    <button class="term-tab-new" title="Новая вкладка">+</button>
-                </div>
+                <!-- Тело терминала (логи) -->
+                <div class="term-body" id="install-term" tabindex="0"></div>
                 
-                <!-- Основная область терминала -->
-                <div class="term-main-area">
-                    
-                    <!-- Левая панель: Этапы установки -->
-                    <aside class="term-sidebar" id="install-sidebar">
-                        <div class="sidebar-header">ЭТАПЫ</div>
-                        <ul class="phase-list" id="phase-list">
-                            <!-- Заполняется через JS -->
-                        </ul>
-                    </aside>
-
-                    <!-- Правая панель: Сам терминал -->
-                    <div class="term-content-wrapper">
-                        <!-- Вывод логов -->
-                        <div class="term-body" id="install-term" tabindex="0"></div>
-                        
-                        <!-- Строка ввода -->
-                        <div class="term-inputline" id="install-inputline" style="display: none;">
-                            <span class="prompt" id="install-prompt">root@livecd:~#</span>
-                            <input type="text" id="install-input" class="term-in" autocomplete="off" spellcheck="false" autofocus aria-label="Ввод команды" />
-                        </div>
-                    </div>
+                <!-- Строка ввода -->
+                <div class="term-inputline" id="install-inputline" style="display: none;">
+                    <span class="prompt" id="install-prompt">root@livecd:~#</span>
+                    <input type="text" id="install-input" class="term-in" autocomplete="off" spellcheck="false" autofocus aria-label="Ввод команды" />
                 </div>
 
-                <!-- Статусбар -->
+                <!-- Статусбар снизу -->
                 <div class="term-statusbar">
-                    <div class="status-left">
-                        <span class="status-dot"></span>
-                        <span id="status-phase">READY</span>
-                    </div>
-                    <div class="status-center">
-                        <span id="status-eta">ETA: --:--:--</span>
-                    </div>
-                    <div class="status-right">
-                        <span id="status-percent">0.0%</span>
-                        <div class="status-progress"><div class="progress-fill" id="install-progress"></div></div>
-                    </div>
+                    <span id="status-phase">READY</span>
+                    <span id="status-eta">ETA: --:--:--</span>
+                    <span id="status-percent">0.0%</span>
+                    <div class="status-progress"><div class="progress-fill" id="install-progress"></div></div>
                 </div>
+
             </div>
         </section>
 
-
-        <!-- =======================================================================
-             ЭКРАН 3: РАБОЧИЙ СТОЛ (DESKTOP)
-             ======================================================================= -->
+        <!-- ЭКРАН 3: РАБОЧИЙ СТОЛ -->
         <section id="screen-desktop" class="screen">
-            
             <div class="desktop-bg" id="desktop-bg"></div>
             
-            <!-- Иконки на рабочем столе -->
             <div class="desktop-icons" id="desktop-icons">
-                
                 <button class="desk-icon" data-app="terminal" title="Открыть терминал">
                     <div class="di-img"><svg><use href="#icon-terminal"></use></svg></div>
                     <span class="di-label">Terminal</span>
                 </button>
-                
                 <button class="desk-icon" data-app="files" title="Файловый менеджер">
                     <div class="di-img"><svg><use href="#icon-folder"></use></svg></div>
                     <span class="di-label">Files</span>
                 </button>
-                
-                <button class="desk-icon" data-app="settings" title="Настройки системы">
+                <button class="desk-icon" data-app="settings" title="Настройки">
                     <div class="di-img"><svg><use href="#icon-settings"></use></svg></div>
                     <span class="di-label">Settings</span>
                 </button>
-                
-                <button class="desk-icon" data-app="handbook" title="Руководство пользователя">
+                <button class="desk-icon" data-app="handbook" title="Руководство">
                     <div class="di-img"><svg><use href="#icon-book"></use></svg></div>
                     <span class="di-label">Handbook</span>
                 </button>
-                
                 <button class="desk-icon" data-app="about" title="О системе">
                     <div class="di-img"><svg><use href="#icon-info"></use></svg></div>
-                    <span class="di-label">System Info</span>
+                    <span class="di-label">System</span>
                 </button>
             </div>
 
-            <!-- Контейнер для окон -->
             <div id="windows-container"></div>
 
             <!-- Меню Пуск -->
             <div id="start-menu" class="start-menu hidden">
                 <div class="start-menu-header">СИСТЕМА</div>
                 <div class="sm-apps">
-                    <button class="sm-item" data-app="terminal">
-                        <svg><use href="#icon-terminal"></use></svg> Terminal
-                    </button>
-                    <button class="sm-item" data-app="files">
-                        <svg><use href="#icon-folder"></use></svg> Files
-                    </button>
-                    <button class="sm-item" data-app="settings">
-                        <svg><use href="#icon-settings"></use></svg> Settings
-                    </button>
+                    <button class="sm-item" data-app="terminal"><svg><use href="#icon-terminal"></use></svg> Terminal</button>
+                    <button class="sm-item" data-app="files"><svg><use href="#icon-folder"></use></svg> Files</button>
+                    <button class="sm-item" data-app="settings"><svg><use href="#icon-settings"></use></svg> Settings</button>
                 </div>
                 <div class="start-menu-separator"></div>
-                <button class="sm-item power" id="sm-reboot">
-                    <svg><use href="#icon-reboot"></use></svg> Reboot System
-                </button>
-                <button class="sm-item power" id="sm-shutdown">
-                    <svg><use href="#icon-power"></use></svg> Shutdown
-                </button>
+                <button class="sm-item power" id="sm-reboot"><svg><use href="#icon-reboot"></use></svg> Reboot</button>
+                <button class="sm-item power" id="sm-shutdown"><svg><use href="#icon-power"></use></svg> Shutdown</button>
             </div>
 
             <!-- Панель задач -->
@@ -325,9 +228,7 @@
                     <span id="de-name">i3wm</span>
                 </button>
                 
-                <div class="taskbar-windows" id="taskbar-windows">
-                    <!-- Сюда JS добавляет кнопки окон -->
-                </div>
+                <div class="taskbar-windows" id="taskbar-windows"></div>
                 
                 <div class="taskbar-right">
                     <div class="sys-tray">
@@ -340,20 +241,20 @@
                 </div>
             </div>
 
-            <!-- Приветственный тост -->
+            <!-- Тост -->
             <div class="welcome-toast hidden" id="welcome-toast">
                 <div class="toast-header">
                     <svg><use href="#icon-info"></use></svg>
                     <h2>УСТАНОВКА ЗАВЕРШЕНА</h2>
                 </div>
                 <div class="toast-body">
-                    <p>Система успешно скомпилирована и установлена.</p>
-                    <p>Откройте <b>Terminal</b> и введите <code>fastfetch</code>, чтобы проверить систему.</p>
+                    <p>Система успешно скомпилирована.</p>
+                    <p>Откройте <b>Terminal</b> и введите <code>fastfetch</code>.</p>
                 </div>
                 <button class="toast-close" onclick="document.getElementById('welcome-toast').classList.add('hidden')">X</button>
             </div>
 
-            <!-- Модальное окно выключения -->
+            <!-- Модалка выключения -->
             <div class="overlay-modal hidden" id="power-modal">
                 <div class="modal-box">
                     <h2>ЗАВЕРШЕНИЕ РАБОТЫ</h2>
@@ -364,17 +265,13 @@
                     </div>
                 </div>
             </div>
-
         </section>
     </div>
 
-
     <!-- =========================================================================
          ШАБЛОНЫ ПРИЛОЖЕНИЙ (TEMPLATES)
-         Используются JS для создания новых окон без дублирования HTML.
          ========================================================================= -->
 
-    <!-- Базовое окно (рамка) -->
     <template id="window-template">
         <div class="app-window">
             <div class="win-titlebar">
@@ -392,7 +289,6 @@
         </div>
     </template>
 
-    <!-- Приложение: Терминал -->
     <template id="app-terminal">
         <div class="term-app">
             <div class="term-out"></div>
@@ -403,7 +299,6 @@
         </div>
     </template>
 
-    <!-- Приложение: Файловый менеджер -->
     <template id="app-files">
         <div class="files-app">
             <div class="files-toolbar">
@@ -415,16 +310,14 @@
             <div class="files-layout">
                 <aside class="files-sidebar">
                     <ul>
-                        <li class="active">🏠 Home</li>
-                        <li>📄 Documents</li>
-                        <li>🖼️ Pictures</li>
-                        <li>⬇️ Downloads</li>
+                        <li class="active">[DIR] Home</li>
+                        <li>[DIR] Documents</li>
+                        <li>[DIR] Pictures</li>
+                        <li>[DIR] Downloads</li>
                     </ul>
                 </aside>
                 <div class="files-list-area">
-                    <div class="files-grid">
-                        <!-- JS заполняет -->
-                    </div>
+                    <div class="files-grid"></div>
                 </div>
             </div>
             <div class="files-statusbar">
@@ -434,7 +327,6 @@
         </div>
     </template>
 
-    <!-- Приложение: Настройки -->
     <template id="app-settings">
         <div class="settings-app">
             <aside class="settings-sidebar">
@@ -459,44 +351,38 @@
         </div>
     </template>
 
-    <!-- Приложение: О системе (About) -->
     <template id="app-about">
         <div class="about-app">
             <div class="about-logo">
                 <svg><use href="#icon-terminal"></use></svg>
             </div>
-            <h2>DistroScope Linux</h2>
+            <h2>lfs-gentoo-tui Linux</h2>
             <p class="version">Version 1.0 (Build 2026)</p>
             <div class="about-details">
                 <p>Архитектура: x86_64</p>
                 <p>Ядро: Скомпилировано вручную</p>
-                <p>Оконный менеджер: i3wm (симуляция)</p>
+                <p>Оконный менеджер: (симуляция)</p>
             </div>
-            <p class="copyright">© 2026 DistroScope Project.<br>Сделано с любовью к компиляции.</p>
+            <p class="copyright">© 2026 lfs-gentoo-tui Project.<br>Сделано с любовью к компиляции.</p>
         </div>
     </template>
 
-    <!-- Приложение: Handbook (Текст) -->
     <template id="app-handbook">
         <div class="text-app">
             <h3>Руководство пользователя</h3>
-            <p>Добро пожаловать в вашу новую систему. Вот несколько команд, которые вы можете попробовать в терминале:</p>
+            <p>Добро пожаловать в вашу новую систему. Вот несколько команд:</p>
             <ul>
                 <li><code>fastfetch</code> — Показать информацию о системе</li>
                 <li><code>ls</code> — Список файлов в текущей директории</li>
                 <li><code>cat notes.txt</code> — Прочитать файл</li>
-                <li><code>emerge pkg</code> — Попытаться установить пакет</li>
+                <li><code>htop</code> — Открыть монитор системы</li>
                 <li><code>reboot</code> — Перезагрузить систему</li>
                 <li><code>clear</code> — Очистить экран</li>
             </ul>
-            <p>Помните: вы сами собрали эту систему. Гордитесь этим.</p>
         </div>
     </template>
 
-
-    <!-- =========================================================================
-         ПОДКЛЮЧЕНИЕ СКРИПТОВ
-         ========================================================================= -->
+    <!-- ПОДКЛЮЧЕНИЕ СКРИПТОВ -->
     <script src="js/data.js"></script>
     <script src="js/installer.js"></script>
     <script src="js/desktop.js"></script>
