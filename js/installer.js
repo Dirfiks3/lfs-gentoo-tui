@@ -1,0 +1,238 @@
+/* ============================================================
+   installer.js — Интерактивный симулятор (LFS = 1ч, Gentoo = 30м)
+   ============================================================ */
+
+(function () {
+  const D = window.DS_DATA;
+
+  const LFS_CMDS = ["fdisk", "su", "tar", "make", "make", "make", "tar", "make", "grub-install", "reboot"];
+  const GENTOO_CMDS = ["timedatectl", "wget", "nano", "chroot", "emerge", "emerge", "nano", "grub-install", "reboot"];
+
+  const NOISE = [
+    '  CC       foo/bar.o', '  CCLD     libtool', '  AR       lib.a',
+    '  GEN      config.h', 'make[2]: Entering directory `/usr/src/...\'',
+    'compiling... 89%', 'linking stage...', 'checking for stdlib.h... yes',
+    'mv -f .deps/Tmp-stampT ...', '  INSTALL    bin/prog',
+    '[ 97%] Built target all', 'touch stamp-h1', 'sed -e s/@VERSION@/1.0/ ...',
+    'gzip -9f man1/prog.1', 'strip --strip-unneeded lib.so',
+  ];
+
+  let currentStepIndex = 0;
+  let currentDistro = 'lfs';
+  let isRunning = false;
+  let currentStepStartTime = 0;
+  let accumulatedTime = 0;
+  let progressInterval = null;
+  let clockInterval = null;
+  let noiseInterval = null;
+  let totalWeight = 0;
+  let currentSteps = [];
+  let sessionTotalTime = 0;
+
+  const $ = (id) => document.getElementById(id);
+
+  function esc(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function colorize(line) {
+    let html = esc(line);
+    if (/^\$ |^# |^lfs:~\$ |^\(chroot\)/.test(line)) {
+      html = '<span class="log-cmd">' + html + '</span>';
+    } else if (/^(>>>|\[|Checking|checking|Creating|Installing|Generating|Writing|распаковано|Пакетов|Kernel:|Resolving|stage3|These|Available|DEPMOD|Calculating|gcc \(|New password|\* |mke2fs|Found|Installation)/.test(line)) {
+      html = '<span class="log-out">' + html + '</span>';
+    } else if (/OK|ok|PASS|Done|done|finished|reboot/.test(line)) {
+      html = '<span class="log-ok">' + html + '</span>';
+    } else {
+      html = '<span class="log-info">' + html + '</span>';
+    }
+    if (/\[  OK  \]/.test(html)) html = html.replace('[  OK  ]', '<b class="ok-badge">[  OK  ]</b>');
+    if (/warning/i.test(html)) html = html.replace('warning', '<b class="warn-badge">warning</b>');
+    return html;
+  }
+
+  function appendLine(text) {
+    const term = $('install-term');
+    if (!term) return;
+    const div = document.createElement('div');
+    div.className = 'log-line';
+    div.innerHTML = colorize(text);
+    term.appendChild(div);
+    term.scrollTop = term.scrollHeight;
+    while (term.children.length > 4000) {
+      term.removeChild(term.firstChild);
+    }
+  }
+
+  function randomNoise() {
+    return NOISE[Math.floor(Math.random() * NOISE.length)];
+  }
+
+  function formatTime(ms) {
+    const s = Math.max(0, Math.floor(ms / 1000));
+    const h = String(Math.floor(s / 3600)).padStart(2, '0');
+    const m = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+    const sec = String(s % 60).padStart(2, '0');
+    return `${h}:${m}:${sec}`;
+  }
+
+  function handleInput(event) {
+    if (event.key !== 'Enter' || !isRunning) return;
+
+    const inputField = $('install-input');
+    const command = inputField.value.trim().toLowerCase();
+    if (!command) return;
+
+    appendLine(`root@livecd ~ # ${inputField.value}`);
+    inputField.value = '';
+
+    const expectedCmd = currentDistro === 'gentoo' ? GENTOO_CMDS[currentStepIndex] : LFS_CMDS[currentStepIndex];
+
+    if (expectedCmd && !command.includes(expectedCmd.toLowerCase())) {
+      appendLine(`bash: ${command}: command not found`);
+      return;
+    }
+
+    inputField.disabled = true;
+    runStep();
+  }
+
+  function runStep() {
+    const step = currentSteps[currentStepIndex];
+    const progressFill = $('install-progress');
+    const statusPhase = $('status-phase');
+    
+    statusPhase.textContent = step.phase;
+    appendLine(`═══════════ ${step.phase} ═══════════`);
+    
+    if (step.lines && step.lines.length > 0) {
+      step.lines.forEach((line, index) => {
+        setTimeout(() => {
+          appendLine(line);
+        }, (index + 1) * (100 + Math.random() * 150)); 
+      });
+    }
+
+    const weight = step.weight || 1;
+    const stepDuration = (weight / totalWeight) * sessionTotalTime;
+    currentStepStartTime = Date.now();
+
+    clearInterval(noiseInterval);
+    noiseInterval = setInterval(() => {
+      if (Date.now() - currentStepStartTime < stepDuration) {
+        const burst = 1 + Math.floor(Math.random() * 3);
+        for (let n = 0; n < burst; n++) {
+          setTimeout(() => appendLine(randomNoise()), n * (200 + Math.random() * 400));
+        }
+      }
+    }, 1500 + Math.random() * 2500);
+
+    clearInterval(progressInterval);
+    progressInterval = setInterval(() => {
+      const elapsed = Date.now() - currentStepStartTime;
+      const stepProgress = Math.min(1, elapsed / stepDuration);
+      const totalProgress = (currentStepIndex + stepProgress) / currentSteps.length;
+      
+      progressFill.style.width = `${(totalProgress * 100).toFixed(1)}%`;
+      $('status-percent').textContent = `${(totalProgress * 100).toFixed(1)}%`;
+
+      if (stepProgress >= 1) {
+        clearInterval(progressInterval);
+        clearInterval(noiseInterval);
+        accumulatedTime += stepDuration;
+        currentStepIndex++;
+
+        if (currentStepIndex < currentSteps.length) {
+          const inputField = $('install-input');
+          inputField.disabled = false;
+          inputField.focus();
+          
+          const nextCmd = currentDistro === 'gentoo' ? GENTOO_CMDS[currentStepIndex] : LFS_CMDS[currentStepIndex];
+          appendLine(`[Подсказка: введи "${nextCmd}"]`);
+        } else {
+          finishInstallation();
+        }
+      }
+    }, 100);
+  }
+
+  function finishInstallation() {
+    isRunning = false;
+    clearInterval(clockInterval);
+    clearInterval(noiseInterval);
+    clearInterval(progressInterval);
+    
+    $('status-phase').textContent = 'DONE';
+    $('install-progress').style.width = '100%';
+    $('status-percent').textContent = '100%';
+    
+    appendLine('');
+    appendLine('██████████████████████████████ 100%');
+    appendLine(currentDistro === 'gentoo' ? 'Gentoo установлена. Добро пожаловать.' : 'LFS собрана. Ты буквально построил Linux сам.');
+    appendLine('Загрузка рабочего окружения...');
+    
+    $('install-inputline').style.display = 'none';
+
+    setTimeout(() => {
+      if (window.DS_APP && window.DS_APP.goDesktop) {
+        window.DS_APP.goDesktop();
+      }
+    }, 3000);
+  }
+
+  function start(distro) {
+    if (isRunning) return;
+    isRunning = true;
+    currentDistro = distro;
+    currentStepIndex = 0;
+    accumulatedTime = 0;
+
+    sessionTotalTime = distro === 'lfs' ? 60 * 60 * 1000 : 30 * 60 * 1000;
+
+    currentSteps = distro === 'gentoo' ? D.GENTOO_STEPS : D.LFS_STEPS;
+    totalWeight = currentSteps.reduce((acc, s) => acc + (s.weight || 1), 0);
+
+    const term = $('install-term');
+    if (term) term.innerHTML = '';
+    
+    const inputField = $('install-input');
+    inputField.disabled = false;
+    $('install-inputline').style.display = 'flex';
+    inputField.focus();
+    
+    inputField.removeEventListener('keydown', handleInput);
+    inputField.addEventListener('keydown', handleInput);
+
+    $('install-title').textContent = distro === 'gentoo' 
+      ? 'root@livecd ~ # emerge -av @world — Gentoo'
+      : 'lfs@livecd ~ # make -j$(nproc) — LFS';
+
+    appendLine('GNU Bash 5.2 — сессия установки запущена.');
+    appendLine(distro === 'gentoo'
+      ? '# Установка Gentoo по Handbook. Поехали. (30 минут)'
+      : '# Linux From Scratch. Ни один пакет не скачан бинарным. (1 час)');
+    appendLine('⏳ Не закрывай вкладку!');
+    
+    const firstCmd = distro === 'gentoo' ? GENTOO_CMDS[0] : LFS_CMDS[0];
+    appendLine(`[Подсказка: введи "${firstCmd}"]`);
+
+    clearInterval(clockInterval);
+    clockInterval = setInterval(() => {
+      if (!isRunning) return;
+      const elapsed = accumulatedTime + (Date.now() - currentStepStartTime);
+      const remaining = Math.max(0, sessionTotalTime - elapsed);
+      
+      $('install-clock').textContent = formatTime(elapsed);
+      $('status-eta').textContent = `ETA: ${formatTime(remaining)}`;
+    }, 1000);
+  }
+
+  function stop() {
+    isRunning = false;
+    clearInterval(progressInterval);
+    clearInterval(clockInterval);
+    clearInterval(noiseInterval);
+  }
+
+  window.DS_INSTALLER = { start, stop };
+})();
