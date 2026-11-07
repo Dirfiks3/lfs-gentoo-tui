@@ -1,12 +1,24 @@
-# DistroScope
+<div align="center">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/a/af/Tux.png" alt="Tux the Penguin" width="140" />
+  <h1>DistroScope</h1>
+  <p><strong>LFS & Gentoo installation simulator in a strict TUI-style web interface.</strong></p>
 
-**LFS & Gentoo installation simulator in a TUI-style web interface.**
+  <a href="https://github.com/Dirfiks3/lfs-gentoo-tui">
+    <img src="https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=flat-square&logo=javascript" alt="JavaScript" />
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="License" />
+  </a>
+  <a href="#">
+    <img src="https://img.shields.io/badge/Status-Active-success?style=flat-square" alt="Status" />
+  </a>
+</div>
 
-[![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=flat-square&logo=javascript)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Active-success?style=flat-square)]()
+<br />
 
-[Русская версия](README.ru.md)
+<div align="center">
+  <a href="README.ru.md">Русская версия</a>
+</div>
 
 ---
 
@@ -21,6 +33,11 @@ DistroScope is a browser-based terminal simulator that recreates the process of 
 - **Dynamic Logs:** Real-time compilation logs with syntax highlighting, simulated package builds, and kernel compilation output.
 - **Minimalist Desktop:** After installation, the user is dropped into a lightweight, window-manager-like environment with a functional terminal and `fastfetch`.
 - **Strict UI:** No emojis, no gradients, no distractions. Built for focus.
+
+## Preview
+
+<!-- Замени ссылку ниже на реальный скриншот твоего проекта -->
+![DistroScope UI Preview](https://via.placeholder.com/1000x500/0a0a0a/ffffff?text=Terminal+Simulator+Screenshot)
 
 ## Tech Stack
 
