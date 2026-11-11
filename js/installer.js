@@ -1,473 +1,452 @@
 /* ============================================================
    installer.js — ЯДРО СИСТЕМЫ УСТАНОВКИ LFS-GENTOO-TUI
-   Проект: lfs-gentoo-tui
-   Файл: installer.js
-   Строк: ~900
-   Описание: Главный контроллер процесса установки. 
-   Время установки установлено на 10 минут для обоих дистрибутивов.
-   Исправлены фатальные ошибки DOM и логики таймеров.
+   Строгая последовательность команд (1 в 1 как в Handbook).
+   Совместим со старым форматом data.js через адаптер.
    ============================================================ */
 
 "use strict";
 
 (function () {
     // ========================================================================
-    // 0. КОНФИГУРАЦИЯ И КОНСТАНТЫ
+    // 0. КОНСТАНТЫ И КОНФИГ
     // ========================================================================
 
-    const D = window.DS_DATA;
-    const LOG = window.DS_APP ? window.DS_APP.logger : console;
+    const D = window.DS_DATA || {};
+    const LOG = (window.DS_APP && window.DS_APP.logger) ? window.DS_APP.logger : console;
 
-    const INSTALLER_CONFIG = {
-        // Общее время установки: 10 минут для обоих дистрибутивов
-        TOTAL_DURATION_MS: 10 * 60 * 1000, 
-        
-        // Максимальное количество строк в терминале (защита от зависания)
-        MAX_DOM_LINES: 3000,
-        
-        // Частота обновления прогресс-бара
-        PROGRESS_TICK_RATE: 100,
-        
-        // Частота генерации фонового шума компиляции
-        NOISE_TICK_RATE: 2000,
-        
-        // Цвета (синхронизированы с CSS)
+    const CFG = {
+        DEFAULT_CMD_DELAY: 350,      // мс между строкой вывода
+        MAX_DOM_LINES: 800,          // защита от переполнения терминала
+        NOISE_TICK_RATE: 900,        // как часто шумит "компиляция"
         COLORS: {
-            CMD: '#4af626',
-            OUT: '#cccccc',
-            OK: '#4af626',
-            ERR: '#ff5f56',
-            INFO: '#58a6ff',
-            DIM: '#888888'
+            CMD:  '#4af626',          // ввод команды
+            OUT:  '#cccccc',          // обычный вывод
+            OK:   '#4af626',          // успех
+            ERR:  '#ff5f56',          // ошибка
+            INFO: '#58a6ff'           // подсказка
         }
     };
 
-    // Словарь синонимов для команд
-    const COMMAND_SYNONYMS = {
-        'make': ['make', 'compile', 'build', 'gmake'],
-        'emerge': ['emerge', 'install', 'apt', 'pacman', 'dnf'],
-        'fdisk': ['fdisk', 'parted', 'cfdisk', 'gdisk'],
-        'tar': ['tar', 'unzip', 'extract', 'untar'],
-        'su': ['su', 'sudo', 'login'],
-        'nano': ['nano', 'vim', 'vi', 'edit'],
-        'chroot': ['chroot', 'env', 'switch'],
-        'wget': ['wget', 'curl', 'download', 'fetch'],
-        'grub-install': ['grub-install', 'grub', 'bootloader'],
-        'reboot': ['reboot', 'shutdown', 'exit', 'poweroff']
-    };
-
     // ========================================================================
-    // 1. СОСТОЯНИЕ СИСТЕМЫ (STATE)
+    // 1. СОСТОЯНИЕ
     // ========================================================================
 
-    const InstallState = {
+    const State = {
         distro: 'lfs',
+        steps: [],
+        stepIndex: 0,
+        commandIndex: 0,
         isRunning: false,
-        currentPhaseIndex: 0,
-        totalSteps: 0,
-        currentStep: null,
-        totalWeight: 0,
-        sessionTotalTime: 0,
-        
-        // Тайминги
-        phaseStartTime: 0,
-        accumulatedTime: 0,
-        
-        // Интервалы
-        timers: {
-            clock: null,
-            progress: null,
-            noise: null
-        },
-
-        // Статистика
-        stats: {
-            linesPrinted: 0,
-            commandsTyped: 0,
-            errorsMade: 0
-        }
+        isWaiting: false,           // true во время вывода команды
+        phaseStart: 0,
+        timers: { clock: null },
+        stats: { commandsTyped: 0, errorsMade: 0 }
     };
 
     // ========================================================================
-    // 2. УТИЛИТЫ (UTILS)
+    // 2. УТИЛИТЫ
     // ========================================================================
 
     const Utils = {
         $: (id) => document.getElementById(id),
 
-        escapeHtml: function(str) {
-            if (typeof str !== 'string') return '';
-            return str
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
-        },
+        // Никакого innerHTML для пользовательских данных. Только textContent.
+        esc: (s) => String(s == null ? '' : s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;'),
 
-        formatTime: function(ms) {
-            const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-            const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
-            const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
-            const seconds = String(totalSeconds % 60).padStart(2, '0');
-            return `${hours}:${minutes}:${seconds}`;
-        },
+        sleep: (ms) => new Promise(r => setTimeout(r, ms)),
+        pick: (arr) => arr[Math.floor(Math.random() * arr.length)],
 
-        randomInt: (min, max) => Math.floor(Math.random() * (max - min + 1)) + min,
-        randomChoice: (arr) => arr[Math.floor(Math.random() * arr.length)]
+        formatTime: (ms) => {
+            const s = Math.max(0, Math.floor(ms / 1000));
+            return [Math.floor(s / 3600), Math.floor((s % 3600) / 60), s % 60]
+                .map(n => String(n).padStart(2, '0')).join(':');
+        }
     };
 
     // ========================================================================
-    // 3. УПРАВЛЕНИЕ ТЕРМИНАЛОМ (TERMINAL UI)
+    // 3. ТЕРМИНАЛ (безопасный)
     // ========================================================================
 
-    const TerminalUI = {
-        clear: function() {
-            const term = Utils.$('install-term');
-            if (term) term.innerHTML = '';
-            InstallState.stats.linesPrinted = 0;
+    const Term = {
+        clear() {
+            const t = Utils.$('install-term');
+            if (t) t.innerHTML = '';
         },
 
-        colorize: function(line) {
-            const escaped = Utils.escapeHtml(line);
-            
-            if (/^\$ |^# |^lfs:~\$ |^\(chroot\)/.test(line)) {
-                return `<span style="color:${INSTALLER_CONFIG.COLORS.CMD}">${escaped}</span>`;
-            }
-            if (/error|failed|fatal|warning/i.test(line)) {
-                return `<span style="color:${INSTALLER_CONFIG.COLORS.ERR}">${escaped}</span>`;
-            }
-            if (/OK|ok|PASS|Done|done|finished|success/i.test(line)) {
-                return `<span style="color:${INSTALLER_CONFIG.COLORS.OK}">${escaped}</span>`;
-            }
-            return `<span style="color:${INSTALLER_CONFIG.COLORS.OUT}">${escaped}</span>`;
-        },
-
-        appendLine: function(text, isRaw = false) {
-            const term = Utils.$('install-term');
-            if (!term) return;
+        line(text, mode) {
+            const t = Utils.$('install-term');
+            if (!t) return;
 
             const div = document.createElement('div');
-            div.className = 'log-line';
-            div.innerHTML = isRaw ? text : this.colorize(text);
-            
-            // Безопасное добавление (так как инпут теперь ВНЕ терминала)
-            term.appendChild(div);
-            
-            // Автоскролл вниз
-            term.scrollTop = term.scrollHeight;
-            
-            // Защита от переполнения DOM
-            while (term.children.length > INSTALLER_CONFIG.MAX_DOM_LINES) {
-                term.removeChild(term.firstChild);
+            const colorKey = (mode || 'out').toUpperCase();
+            div.className = 'log-line log-' + (mode || 'out');
+            div.style.color = CFG.COLORS[colorKey] || CFG.COLORS.OUT;
+            // textContent — XSS невозможен
+            div.textContent = (text === '' || text == null) ? '\u00a0' : String(text);
+
+            t.appendChild(div);
+            t.scrollTop = t.scrollHeight;
+            while (t.children.length > CFG.MAX_DOM_LINES) t.removeChild(t.firstChild);
+        },
+
+        blank() { this.line('\u00a0', 'out'); },
+
+        async stream(lines, delay) {
+            for (const ln of lines) {
+                if (!State.isRunning) return;
+                Term.line(ln, 'out');
+                await Utils.sleep(delay || CFG.DEFAULT_CMD_DELAY);
             }
-            
-            InstallState.stats.linesPrinted++;
         },
 
-        appendEmptyLine: function() {
-            this.appendLine('', true);
+        status(phase, percent, eta) {
+            const p  = Utils.$('status-phase');
+            const pc = Utils.$('status-percent');
+            const e  = Utils.$('status-eta');
+            if (p)  p.textContent  = phase;
+            if (pc) pc.textContent = percent.toFixed(1) + '%';
+            if (e)  e.textContent  = 'ETA: ' + eta;
         },
 
-        updateStatusBar: function(phase, percent, eta) {
-            const phaseEl = Utils.$('status-phase');
-            const percentEl = Utils.$('status-percent');
-            const etaEl = Utils.$('status-eta');
-
-            if (phaseEl) phaseEl.textContent = phase;
-            if (percentEl) percentEl.textContent = `${percent.toFixed(1)}%`;
-            if (etaEl) etaEl.textContent = `ETA: ${eta}`;
-        },
-
-        updateProgressBar: function(percent) {
-            const fill = Utils.$('install-progress');
-            if (fill) fill.style.width = `${Math.min(100, Math.max(0, percent))}%`;
+        progress(percent) {
+            const f = Utils.$('install-progress');
+            if (f) f.style.width = Math.min(100, Math.max(0, percent)) + '%';
         }
     };
 
     // ========================================================================
-    // 4. ГЕНЕРАТОР ШУМА (NOISE GENERATOR)
+    // 4. ШУМ КОМПИЛЯЦИИ (строго по фазе, не рандом)
     // ========================================================================
 
-    const NoiseGenerator = {
-        NOISE_DB: {
-            compiling: ['  CC      kernel/sched/core.o', '  LD      vmlinux.o', '  CCLD    libc.so.6', 'checking whether gcc accepts -g... yes', 'make[1]: Nothing to be done for \'all\'.'],
-            emerging: ['>>> Emerging (2 of 214) dev-libs/openssl', '>>> Unpacking source...', '>>> Compiling source ...', ' * Applying patch ...', 'make: Entering directory ...'],
-            kernel: ['  CC      init/do_mounts.o', '  CC      arch/x86/kernel/head_64.o', '  LDS     arch/x86/kernel/vmlinux.lds', '  BZIMAGE arch/x86/boot/bzImage']
+    const Noise = {
+        timer: null,
+        pools: {
+            partition: [
+                '[1234.567] sd 0:0:0:0: [sda] Attached SCSI disk',
+                'Partition table created.'
+            ],
+            extract: [
+                'Extracting archive...',
+                'Files written: 41208',
+                'Hard links: 0'
+            ],
+            config: [
+                'Syncing repository...',
+                '>>> Sync finished'
+            ],
+            compile: [
+                '  CC      kernel/sched/core.o',
+                '  LD      vmlinux.o',
+                '  CCLD    libc.so.6',
+                '  AR      libstdc++.a'
+            ],
+            emerge: [
+                '>>> Emerging (2 of 214) dev-libs/openssl-3.0.9',
+                '>>> Unpacking source...',
+                '>>> Compiling source...',
+                ' * Applying patch...'
+            ],
+            install: [
+                '>>> Installing (2 of 214) dev-libs/openssl-3.0.9',
+                'strip: x86_64-pc-linux-gnu-strip --strip-unneeded'
+            ],
+            boot: [
+                'Installing GRUB to /dev/sda...',
+                'Generating grub.cfg...'
+            ]
         },
 
-        getNoise: function(phaseName) {
-            const phase = (phaseName || '').toLowerCase();
-            let pool = this.NOISE_DB.compiling;
-            if (phase.includes('world') || phase.includes('system') || phase.includes('emerge')) pool = this.NOISE_DB.emerging;
-            else if (phase.includes('kernel')) pool = this.NOISE_DB.kernel;
-            return Utils.randomChoice(pool);
+        pickKey(phaseName) {
+            const n = (phaseName || '').toUpperCase();
+            if (/PARTITION|DISK|FSTAB/.test(n))         return 'partition';
+            if (/STAGE|EXTRACT|DOWNLOAD/.test(n))       return 'extract';
+            if (/SYNC|PORTAGE|CONFIG|PROFILE/.test(n))  return 'config';
+            if (/KERNEL|GCC|BINUTILS|CORE/.test(n))     return 'compile';
+            if (/WORLD|SYSTEM|EMERGE/.test(n))          return 'emerge';
+            if (/GRUB|BOOT|REBOOT|FINAL/.test(n))       return 'boot';
+            return null;
         },
 
-        start: function() {
+        start(phaseName) {
             this.stop();
-            InstallState.timers.noise = setInterval(() => {
-                if (!InstallState.isRunning || !InstallState.currentStep) return;
-                if (Math.random() > 0.6) {
-                    TerminalUI.appendLine(this.getNoise(InstallState.currentStep.phase));
-                }
-            }, INSTALLER_CONFIG.NOISE_TICK_RATE);
+            const key = this.pickKey(phaseName);
+            if (!key) return;
+            const pool = this.pools[key];
+            this.timer = setInterval(() => {
+                if (!State.isRunning || !State.isWaiting) return;
+                if (Math.random() > 0.5) Term.line(Utils.pick(pool), 'out');
+            }, CFG.NOISE_TICK_RATE);
         },
 
-        stop: function() {
-            if (InstallState.timers.noise) {
-                clearInterval(InstallState.timers.noise);
-                InstallState.timers.noise = null;
-            }
+        stop() {
+            if (this.timer) { clearInterval(this.timer); this.timer = null; }
         }
     };
 
     // ========================================================================
-    // 5. ПАРСЕР КОМАНД (COMMAND PARSER)
+    // 5. ПАРСЕР (СТРОГИЙ)
     // ========================================================================
 
-    const CommandParser = {
-        validate: function(input, expectedCmd) {
-            if (!input || !expectedCmd) return false;
-            const cleanInput = input.trim().toLowerCase();
-            const cleanExpected = expectedCmd.toLowerCase();
+    const Parser = {
+        normalize: (s) => String(s || '').trim().replace(/\s+/g, ' '),
 
-            if (cleanInput === cleanExpected || cleanInput.includes(cleanExpected)) return true;
-
-            const synonyms = COMMAND_SYNONYMS[cleanExpected] || [];
-            for (const syn of synonyms) {
-                if (cleanInput.includes(syn)) return true;
-            }
+        // Точное совпадение. Единственное исключение — префикс sudo.
+        match(input, expected) {
+            const a = this.normalize(input);
+            const b = this.normalize(expected);
+            if (a === b) return true;
+            if (a === 'sudo ' + b) return true;
+            if (b === 'sudo ' + a) return true;
             return false;
         },
 
-        handleInput: function(event) {
-            if (event.key !== 'Enter') return;
+        async onKey(e) {
+            if (e.key !== 'Enter') return;
+            if (!State.isRunning || State.isWaiting) return;
 
-            const inputField = Utils.$('install-input');
-            if (!inputField || inputField.disabled) return;
+            const input = Utils.$('install-input');
+            if (!input || input.disabled) return;
 
-            const rawInput = inputField.value.trim();
-            if (!rawInput) return;
+            const raw = input.value.trim();
+            if (!raw) return;
 
-            TerminalUI.appendLine(`root@livecd:~# ${rawInput}`, true);
-            inputField.value = '';
-            InstallState.stats.commandsTyped++;
+            const step = State.steps[State.stepIndex];
+            if (!step || !step.commands || !step.commands[State.commandIndex]) return;
 
-            if (!InstallState.currentStep) return;
+            const expected = step.commands[State.commandIndex];
 
-            const expected = InstallState.currentStep.cmd || '';
-            const isValid = CommandParser.validate(rawInput, expected); // Жесткая привязка
+            Term.line('root@livecd:~# ' + raw, 'cmd');
+            input.value = '';
+            State.stats.commandsTyped++;
 
-            if (!isValid) {
-                InstallState.stats.errorsMade++;
-                TerminalUI.appendLine(`bash: ${rawInput.split(' ')[0]}: command not found`, true);
-                if (InstallState.stats.errorsMade % 3 === 0) {
-                    TerminalUI.appendLine(`[Подсказка: попробуй ввести "${expected}"]`, true);
+            if (!Parser.match(raw, expected.cmd)) {
+                State.stats.errorsMade++;
+                Term.line('bash: ' + raw.split(' ')[0] + ': command not found', 'err');
+                if (State.stats.errorsMade % 3 === 0) {
+                    Term.line('[Подсказка: попробуй "' + expected.cmd + '"]', 'info');
                 }
                 return;
             }
 
-            inputField.disabled = true;
-            SimulationEngine.executeStep();
+            // Команда верна
+            State.commandIndex++;
+            input.disabled = true;
+            State.isWaiting = true;
+
+            // Прогресс обновляем сразу при вводе
+            const pctStep = State.commandIndex / step.commands.length;
+            const overall = ((State.stepIndex + pctStep) / State.steps.length) * 100;
+            Term.progress(overall);
+            Term.status(step.phase, overall, Utils.formatTime(
+                (step.weight || 1) * 60000 * (1 - pctStep)
+            ));
+
+            Noise.start(step.phase);
+
+            if (expected.out && expected.out.length) {
+                await Term.stream(expected.out, expected.delay || CFG.DEFAULT_CMD_DELAY);
+            } else {
+                await Utils.sleep(300);
+            }
+
+            if (!State.isRunning) return;
+            Noise.stop();
+            State.isWaiting = false;
+
+            if (State.commandIndex >= step.commands.length) {
+                await Engine.completeStep();
+            } else {
+                input.disabled = false;
+                input.focus();
+                Term.line('[Подсказка: следующая команда "' + step.commands[State.commandIndex].cmd + '"]', 'info');
+            }
         }
     };
 
     // ========================================================================
-    // 6. ДВИЖОК СИМУЛЯЦИИ (SIMULATION ENGINE)
+    // 6. ДВИЖОК
     // ========================================================================
 
-    const SimulationEngine = {
-        executeStep: function() {
-            const step = InstallState.currentStep;
-            if (!step) return;
-
-            TerminalUI.appendEmptyLine();
-            TerminalUI.appendLine(`═══════════ [ ФАЗА: ${step.phase} ] ═══════════`);
-            TerminalUI.appendLine(`Starting: ${step.phase}...`);
-
-            const weight = step.weight || 1;
-            // Расчет времени для конкретно этого шага
-            const stepDuration = (weight / InstallState.totalWeight) * InstallState.sessionTotalTime;
-            
-            InstallState.phaseStartTime = Date.now();
-
-            if (step.lines && step.lines.length > 0) {
-                step.lines.forEach((line, index) => {
-                    setTimeout(() => {
-                        if (InstallState.isRunning) TerminalUI.appendLine(line);
-                    }, (index + 1) * Utils.randomInt(80, 120)); 
-                });
+    const Engine = {
+        startStep() {
+            if (!State.isRunning) return;
+            const step = State.steps[State.stepIndex];
+            if (!step || !step.commands || !step.commands.length) {
+                LOG.error && LOG.error('INSTALLER', 'Пустой шаг: ' + State.stepIndex);
+                this.finish();
+                return;
             }
 
-            NoiseGenerator.start();
-            this.startProgressTimer(stepDuration);
+            State.commandIndex = 0;
+            State.phaseStart = Date.now();
+
+            Term.blank();
+            Term.line('═══════════ [ ФАЗА: ' + step.phase + ' ] ═══════════', 'info');
+            Term.line('[Подсказка: введи "' + step.commands[0].cmd + '"]', 'info');
+
+            const input = Utils.$('install-input');
+            if (input) { input.disabled = false; input.focus(); }
         },
 
-        startProgressTimer: function(stepDuration) {
-            if (InstallState.timers.progress) clearInterval(InstallState.timers.progress);
+        async completeStep() {
+            if (!State.isRunning) return;
 
-            InstallState.timers.progress = setInterval(() => {
-                if (!InstallState.isRunning) return;
+            const step = State.steps[State.stepIndex];
+            Term.line('[ OK ] Фаза "' + step.phase + '" завершена.', 'ok');
 
-                const elapsed = Date.now() - InstallState.phaseStartTime;
-                const stepProgress = Math.min(1, elapsed / stepDuration);
-                // Считаем общий прогресс
-                const totalProgress = (InstallState.currentPhaseIndex + stepProgress) / InstallState.totalSteps;
+            State.stepIndex++;
 
-                TerminalUI.updateProgressBar(totalProgress * 100);
-                
-                const remainingMs = Math.max(0, stepDuration - elapsed);
-                TerminalUI.updateStatusBar(
-                    InstallState.currentStep.phase, 
-                    totalProgress * 100, 
-                    Utils.formatTime(remainingMs)
-                );
-
-                if (stepProgress >= 1) {
-                    this.completeStep(stepDuration);
-                }
-            }, INSTALLER_CONFIG.PROGRESS_TICK_RATE);
-        },
-
-        completeStep: function(stepDuration) {
-            clearInterval(InstallState.timers.progress);
-            NoiseGenerator.stop();
-
-            InstallState.accumulatedTime += stepDuration;
-            InstallState.currentPhaseIndex++;
-
-            const steps = InstallState.distro === 'gentoo' ? D.GENTOO_STEPS : D.LFS_STEPS;
-
-            if (InstallState.currentPhaseIndex < steps.length) {
-                InstallState.currentStep = steps[InstallState.currentPhaseIndex];
-                
-                const inputField = Utils.$('install-input');
-                if (inputField) {
-                    inputField.disabled = false;
-                    inputField.focus();
-                }
-
-                TerminalUI.appendEmptyLine();
-                TerminalUI.appendLine(`[УСПЕХ] Фаза завершена.`);
-                TerminalUI.appendLine(`[Подсказка: введи "${InstallState.currentStep.cmd}"]`);
-            } else {
-                this.finishInstallation();
+            if (State.stepIndex >= State.steps.length) {
+                return this.finish();
             }
+
+            await Utils.sleep(400);
+            if (!State.isRunning) return;
+            this.startStep();
         },
 
-        finishInstallation: function() {
-            InstallState.isRunning = false;
-            NoiseGenerator.stop();
+        finish() {
+            State.isRunning = false;
+            State.isWaiting = false;
+            Noise.stop();
+            if (State.timers.clock) { clearInterval(State.timers.clock); State.timers.clock = null; }
 
-            TerminalUI.updateStatusBar('DONE', 100, '00:00:00');
-            TerminalUI.updateProgressBar(100);
+            Term.progress(100);
+            Term.status('DONE', 100, '00:00:00');
 
-            TerminalUI.appendEmptyLine();
-            TerminalUI.appendLine('██████████████████████████████ 100%', true);
-            TerminalUI.appendLine('════════════════════════════════════');
-            TerminalUI.appendLine(InstallState.distro === 'gentoo' 
-                ? 'Gentoo Linux успешно установлена.' 
-                : 'LFS успешно собрана. Ты построил ядро сам.', true);
-            TerminalUI.appendLine('════════════════════════════════════');
-            TerminalUI.appendLine('Загрузка рабочего окружения...');
+            Term.blank();
+            Term.line('════════════════════════════════════', 'ok');
+            Term.line(State.distro === 'gentoo'
+                ? 'Gentoo Linux успешно установлен.'
+                : 'LFS успешно собран. Ты построил ядро сам.', 'ok');
+            Term.line('════════════════════════════════════', 'ok');
+            Term.line('Команд введено: ' + State.stats.commandsTyped +
+                      ' | Ошибок: ' + State.stats.errorsMade, 'info');
+            Term.line('Загрузка рабочего окружения...', 'info');
 
-            const inputline = Utils.$('install-inputline');
-            if (inputline) inputline.style.display = 'none';
+            const il = Utils.$('install-inputline');
+            if (il) il.style.display = 'none';
+            const inp = Utils.$('install-input');
+            if (inp) inp.disabled = true;
 
             setTimeout(() => {
                 if (window.DS_APP && window.DS_APP.goDesktop) {
                     window.DS_APP.goDesktop();
                 }
-            }, 3000);
-        }
-    };
-
-    // ========================================================================
-    // 7. ГЛАВНЫЙ КОНТРОЛЛЕР (MAIN CONTROLLER)
-    // ========================================================================
-
-    const InstallerController = {
-        start: function(distro) {
-            if (InstallState.isRunning) return;
-            
-            InstallState.isRunning = true;
-            InstallState.distro = distro;
-            InstallState.currentPhaseIndex = 0;
-            InstallState.accumulatedTime = 0;
-            InstallState.stats = { linesPrinted: 0, commandsTyped: 0, errorsMade: 0 };
-            
-            // Устанавливаем 10 минут для обоих
-            InstallState.sessionTotalTime = INSTALLER_CONFIG.TOTAL_DURATION_MS;
-
-            const steps = distro === 'gentoo' ? D.GENTOO_STEPS : D.LFS_STEPS;
-            InstallState.currentStep = steps[0];
-            InstallState.totalSteps = steps.length;
-            InstallState.totalWeight = steps.reduce((acc, s) => acc + (s.weight || 1), 0);
-
-            TerminalUI.clear();
-
-            const inputField = Utils.$('install-input');
-            if (inputField) {
-                inputField.disabled = false;
-                inputField.value = '';
-                // Используем onkeydown, чтобы избежать дублирования событий
-                inputField.onkeydown = CommandParser.handleInput;
-            }
-            
-            const inputline = Utils.$('install-inputline');
-            if (inputline) inputline.style.display = 'flex';
-            
-            setTimeout(() => { if (inputField) inputField.focus(); }, 100);
-
-            const titleEl = Utils.$('install-title');
-            if (titleEl) {
-                titleEl.textContent = distro === 'gentoo' ? 'root@livecd: / # emerge' : 'lfs@livecd: / # make';
-            }
-
-            TerminalUI.appendLine('GNU Bash 5.2.15 (x86_64-pc-linux-gnu)', true);
-            TerminalUI.appendLine(`Начинаем установку ${distro === 'gentoo' ? 'Gentoo' : 'Linux From Scratch'}...`);
-            TerminalUI.appendLine(`Время процесса: ${Utils.formatTime(InstallState.sessionTotalTime)}`);
-            TerminalUI.appendLine('Внимание: вам нужно вводить команды вручную.');
-            TerminalUI.appendEmptyLine();
-            TerminalUI.appendLine(`[Подсказка: введи "${InstallState.currentStep.cmd}"]`);
-
-            this.startGlobalClock();
+            }, 2500);
         },
 
-        startGlobalClock: function() {
-            if (InstallState.timers.clock) clearInterval(InstallState.timers.clock);
-
-            InstallState.timers.clock = setInterval(() => {
-                if (!InstallState.isRunning) return;
-
-                // Считаем оставшееся время от ОБЩЕГО времени сессии
-                const elapsed = InstallState.accumulatedTime + (Date.now() - InstallState.phaseStartTime);
-                const remaining = Math.max(0, InstallState.sessionTotalTime - elapsed);
-                
-                const etaEl = Utils.$('status-eta');
-                if (etaEl) etaEl.textContent = `ETA: ${Utils.formatTime(remaining)}`;
+        startClock() {
+            if (State.timers.clock) clearInterval(State.timers.clock);
+            State.timers.clock = setInterval(() => {
+                if (!State.isRunning) return;
+                const step = State.steps[State.stepIndex];
+                if (!step || !step.commands) return;
+                const pctStep = State.commandIndex / step.commands.length;
+                const overall = ((State.stepIndex + pctStep) / State.steps.length) * 100;
+                Term.status(step.phase, overall, Utils.formatTime(
+                    (step.weight || 1) * 60000 * (1 - pctStep)
+                ));
             }, 1000);
-        },
-
-        stop: function() {
-            InstallState.isRunning = false;
-            clearInterval(InstallState.timers.clock);
-            clearInterval(InstallState.timers.progress);
-            NoiseGenerator.stop();
-            TerminalUI.appendLine('УСТАНОВКА ПРЕРВАНА.', true);
         }
     };
 
     // ========================================================================
-    // 8. ЭКСПОРТ
+    // 7. АДАПТЕР СТАРОГО ФОРМАТА DATA.JS
+    // Старый: { phase, weight, cmd, lines }
+    // Новый:  { phase, weight, commands: [{cmd, out, delay}] }
+    // ========================================================================
+
+    function normalizeSteps(rawSteps) {
+        return (rawSteps || []).map(s => {
+            if (Array.isArray(s.commands)) return s;
+            return {
+                phase: s.phase || 'UNKNOWN',
+                weight: s.weight || 1,
+                commands: [{
+                    cmd: s.cmd || 'make',
+                    out: Array.isArray(s.lines) ? s.lines : [],
+                    delay: 120
+                }]
+            };
+        });
+    }
+
+    // ========================================================================
+    // 8. КОНТРОЛЛЕР
+    // ========================================================================
+
+    const Controller = {
+        start(distro) {
+            if (State.isRunning) return;
+
+            const raw = distro === 'gentoo' ? D.GENTOO_STEPS : D.LFS_STEPS;
+            if (!raw || !raw.length) {
+                LOG.error && LOG.error('INSTALLER', 'Не найдены шаги для: ' + distro);
+                Term.line('Ошибка: данные установки не найдены.', 'err');
+                return;
+            }
+
+            State.steps = normalizeSteps(raw);
+            State.distro = distro;
+            State.stepIndex = 0;
+            State.commandIndex = 0;
+            State.isRunning = true;
+            State.isWaiting = false;
+            State.stats = { commandsTyped: 0, errorsMade: 0 };
+
+            Term.clear();
+            Term.progress(0);
+            Term.status('START', 0, '--:--:--');
+
+            Term.line('GNU Bash 5.2.15 (x86_64-pc-linux-gnu)', 'out');
+            Term.line('Начинаем установку ' + (distro === 'gentoo' ? 'Gentoo Linux' : 'Linux From Scratch') + '...', 'out');
+            Term.line('Вводи команды вручную. Опечатки не прощаются.', 'info');
+
+            const input = Utils.$('install-input');
+            if (input) {
+                input.value = '';
+                input.disabled = true;          // откроется в startStep
+                input.onkeydown = (e) => Parser.onKey(e);
+            }
+
+            const il = Utils.$('install-inputline');
+            if (il) il.style.display = 'flex';
+
+            const title = Utils.$('install-title');
+            if (title) title.textContent = distro === 'gentoo' ? 'root@livecd' : 'lfs@livecd';
+
+            Engine.startClock();
+            setTimeout(() => Engine.startStep(), 300);
+        },
+
+        stop() {
+            State.isRunning = false;
+            State.isWaiting = false;
+            Noise.stop();
+            if (State.timers.clock) { clearInterval(State.timers.clock); State.timers.clock = null; }
+            Term.line('УСТАНОВКА ПРЕРВАНА.', 'err');
+        }
+    };
+
+    // ========================================================================
+    // 9. ЭКСПОРТ
     // ========================================================================
 
     window.DS_INSTALLER = {
-        start: InstallerController.start.bind(InstallerController),
-        stop: InstallerController.stop.bind(InstallerController)
+        start: Controller.start.bind(Controller),
+        stop: Controller.stop.bind(Controller)
     };
 
-    LOG.info("INSTALLER", "installer.js module loaded successfully. Time set to 10 minutes.");
+    if (LOG && typeof LOG.info === 'function') {
+        LOG.info('INSTALLER', 'installer.js loaded (strict command mode).');
+    } else {
+        console.log('[INSTALLER] loaded (strict command mode).');
+    }
 
 })();
